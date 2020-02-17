@@ -154,10 +154,62 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
   - can have multiple types of geometry in one object
 * class is `sfc` with bounding box `bbox` and `CRS` attributes
 
+## `sf` and `tidyverse`
+* `sf` functions begin with `st_`
+* Methods for `summary`, `plot`
+* `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
+
 ---
 
-```{r}
+```{r echo = true}
+zebra_sf <- read.csv(here("data", "Zebra.csv")) %>% 
+  dplyr::select(ID = Name, 4:6) %>% 
+  mutate(timestamp = as.POSIXct(lubridate::mdy_hm(Date))) %>%
+  st_as_sf(., coords = 3:4, crs = "+init=epsg:4326") %>% #longlat, converting foreign object to SF object
+  st_transform("+init=epsg:32733") #convert to UTM
+
+
+roads <- st_read(here("data", "enproads.shp"))
+#Roads in Etosha National Park, Namibia.
+
+roads_st <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% 
+  st_transform("+init=epsg:32733")
+
+ggplot() +
+  geom_sf(data=roads_st) +
+  geom_sf(data=zebra_sf, aes(color=ID))
+
+```
+
+```{r echo = true}
+unique(roads$TYPE)
+
+large_roads <- filter(roads_st, TYPE %in% c("Tar", "Gravel"))
+small_roads <- filter(roads_st, TYPE %in% c("Graded", "Track"))
+
+ggplot() +
+  geom_sf(data=large_roads, size=1.5) + 
+  geom_sf(data=small_roads, size=0.6) + 
+  geom_sf(data=zebra, aes(color=ID))
+```
+```{r echo = true}
+# find the minimum distance (in meters) of each point to a large road
+large_dist<- st_distance(y=zebra, x=large_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
+zebra$large_road_dist <- apply(large_dist, 2, min)
+
+# find the minimum distance (in meters) of each point to a small road
+small_dist<- st_distance(y=zebra, x=small_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
+zebra$small_road_dist <- apply(small_dist, 2, min)
+
+head(data.frame(zebra))
+
+plot(roads_st)
+
+```
+
+```{r echo = true}
 fileloc <- system.file("shape/nc.shp", package = "sf")
+
 nc <- read_sf(fileloc) %>%
   select(AREA, NAME)
 print(nc)
@@ -168,26 +220,20 @@ print(nc)
 # 3. feature (row)
 ```
 
-## `sf` and `tidyverse`
-* `sf` functions begin with `st_`
-* Methods for `summary`, `plot`
-* `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
-
-
 ---
 ```{r echo = TRUE}
-st_geometry(nc) %>% plot
+st_geometry(roads) %>% plot
 ```
 
 ---
 ```{r echo = TRUE}
 # Default methods for objects
-plot(nc)
+plot(roads)
 ```
 
 ---
 ```{r echo = TRUE}
-filter(nc, AREA > 0.2)
+filter(roads, KM > 3)
 ```
 
 
@@ -195,13 +241,14 @@ filter(nc, AREA > 0.2)
 
 ## Reading shapefiles
 ```{r echo = TRUE}
-fileloc <- system.file("shape/nc.shp", package = "sf")
-nc <- read_sf(fileloc)
+
+fileloc <- system.file(here("data", "enproads.shp"), package = "sf")
+road <- read_sf(fileloc)
 ```
 
 We can see that projection information is stored with the shapefile
 ```{r echo = TRUE}
-st_crs(nc)
+st_crs(roads_st)
 ```
 
 * used to convert coordinates (do projections) and do datum transformations
