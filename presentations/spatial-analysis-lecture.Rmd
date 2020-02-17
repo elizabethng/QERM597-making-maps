@@ -1,7 +1,7 @@
 ---
-title: "Spatial Analysis"
-subtitle: "FSH 507 Fall 2019"
-author: "Elizabeth Ng"
+title: "Spatial Analysis in R"
+subtitle: "QERM 597 Winter 2020"
+author: "Elizabeth Ng, Brielle Kwarta, Michele Buonanduci, and Harry Podschwit "
 date: " `r Sys.Date()`"
 output:
   ioslides_presentation:
@@ -18,7 +18,11 @@ library("rnaturalearth")
 library("tidyverse")
 library("sf")
 library("here")
-library("htmltab") # scrape html data
+library("htmltab")
+library("lwgeom")
+library("rnaturalearthdata")
+library("rgeos")
+# scrape html data
 ```
 
 ## Overview
