@@ -193,101 +193,50 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
   - can have multiple types of geometry in one object
 * class is `sfc` with bounding box `bbox` and `CRS` attributes
 
-## `sf` and `tidyverse`
-* `sf` functions begin with `st_`
-* Methods for `summary`, `plot`
-* `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
+
 
 ---
-
-```{r echo = true}
-zebra_sf <- read.csv(here("data", "Zebra.csv")) %>% 
-  dplyr::select(ID = Name, 4:6) %>% 
-  mutate(timestamp = as.POSIXct(lubridate::mdy_hm(Date))) %>%
-  st_as_sf(., coords = 3:4, crs = "+init=epsg:4326") %>% #longlat, converting foreign object to SF object
-  st_transform("+init=epsg:32733") #convert to UTM
-
-
-roads <- st_read(here("data", "enproads.shp"))
-#Roads in Etosha National Park, Namibia.
-
-roads_st <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% 
-  st_transform("+init=epsg:32733")
-
-ggplot() +
-  geom_sf(data=roads_st) +
-  geom_sf(data=zebra_sf, aes(color=ID))
-
-```
-
-```{r echo = true}
-unique(roads$TYPE)
-
-large_roads <- filter(roads_st, TYPE %in% c("Tar", "Gravel"))
-small_roads <- filter(roads_st, TYPE %in% c("Graded", "Track"))
-
-ggplot() +
-  geom_sf(data=large_roads, size=1.5) + 
-  geom_sf(data=small_roads, size=0.6) + 
-  geom_sf(data=zebra, aes(color=ID))
-```
-```{r echo = true}
-# find the minimum distance (in meters) of each point to a large road
-large_dist<- st_distance(y=zebra, x=large_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
-zebra$large_road_dist <- apply(large_dist, 2, min)
-
-# find the minimum distance (in meters) of each point to a small road
-small_dist<- st_distance(y=zebra, x=small_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
-zebra$small_road_dist <- apply(small_dist, 2, min)
-
-head(data.frame(zebra))
-
-plot(roads_st)
-
-```
-
-```{r echo = true}
+```{r}
 fileloc <- system.file("shape/nc.shp", package = "sf")
-
 nc <- read_sf(fileloc) %>%
   select(AREA, NAME)
 print(nc)
-
 # Highlight parts
 # 1. list column (aka sfc)
 # 2. feature geometry (sfg)
 # 3. feature (row)
 ```
 
+## `sf` and `tidyverse`
+* `sf` functions begin with `st_`
+* Methods for `summary`, `plot`
+* `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
+
+
 ---
 ```{r echo = TRUE}
-st_geometry(roads) %>% plot
+st_geometry(nc) %>% plot
 ```
 
 ---
 ```{r echo = TRUE}
 # Default methods for objects
-plot(roads)
+plot(nc)
 ```
 
 ---
 ```{r echo = TRUE}
-filter(roads, KM > 3)
+filter(nc, AREA > 0.2)
 ```
 
 
 # Reading and writing data
 
 ## Reading shapefiles
-```{r echo = TRUE}
 
-fileloc <- system.file(here("data", "enproads.shp"), package = "sf")
-road <- read_sf(fileloc)
-```
-
-We can see that projection information is stored with the shapefile
 ```{r echo = TRUE}
-st_crs(roads_st)
+fileloc <- system.file("shape/nc.shp", package = "sf")
+nc <- read_sf(fileloc)
 ```
 
 * used to convert coordinates (do projections) and do datum transformations
@@ -297,7 +246,7 @@ st_crs(roads_st)
 ---
 ```{r echo = TRUE}
 st_crs("+proj=longlat +datum=WGS84") # Proj.4 string"
-st_crs(3857)                         # ESPG code
+st_crs(3857)                         # ESPG code: public registry of spatial reference systems, 3857 = wen-based mapping (i.e. Google                                         maps, OpenStreetMap)
 st_crs(3857)$units                   # check units
 st_crs(NA)                           # unknown (assumed planar/Cartesian)
 ```
@@ -365,29 +314,59 @@ st_geometry(world) %>% plot()
 * use `st_write`
 
 ## Exercises
-1. Load the Lake Tahoe shapefile (`data\h8_tahoe`). What is the `crs`? Plot the geometry.
-2. Upload `boat-launch-sites.csv` and plot the geometry. Save it as a shapefile. 
+1. Load the roads shapefile (enproads.shp) and upload `Zebra.csv` and plot the geometry. 
+2. If we look at our roads data, we see that there are several types of roads in the shapefile. How close or far from different road types do zebra move? 
 
 ## Exercise 1
-```{r echo = TRUE}
-tahoe <- read_sf(here("data", "h8_tahoe"))
-st_crs(tahoe)
-st_geometry(tahoe) %>% plot()
-```
+```{r, echo = TRUE}
 
-## Exercise 2
-```{r echo = TRUE}
-boats <- read.csv(here("data", "boat-launch-sites.csv"))
-boats_spatial <- st_as_sf(boats,
-                       coords = c("lon", "lat"),
-                       crs = 4326)
-st_geometry(boats_spatial) %>% plot
-```
+roads <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% #4326= coordinate system based on Earth's center of mass
+  st_transform("+init=epsg:32733") #32733 = spatial reference for Nambia 
 
+st_geometry(roads) %>% plot
+
+
+zebra_sf <- read.csv(here("data", "Zebra.csv")) %>% 
+  dplyr::select(ID = Name, 4:6) %>% 
+  mutate(timestamp = as.POSIXct(lubridate::mdy_hm(Date))) %>%
+  st_as_sf(., coords = 3:4, crs = "+init=epsg:4326") %>% #longlat, converting foreign object to SF object
+  st_transform("+init=epsg:32733") #convert to UTM
+
+ggplot() +
+  geom_sf(data=roads) +
+  geom_sf(data=zebra_sf, aes(color=ID))
+
+```
 ## Exercise 2
-```{r echo = TRUE}
-dir.create(here("data", "boat-launch-sites"))
-st_write(boats_spatial, here("data", "boat-launch-sites", "boat-launch-sites.shp"))
+How close or far from different road types do zebra move? 
+```{r, echo = TRUE}
+unique(roads$TYPE)
+
+large_roads <- filter(roads, TYPE %in% c("Tar", "Gravel"))
+small_roads <- filter(roads, TYPE %in% c("Graded", "Track"))
+
+ggplot() +
+  geom_sf(data=large_roads, size=1.5) + 
+  geom_sf(data=small_roads, size=0.6) + 
+  geom_sf(data=zebra_sf, aes(color=ID))
+```
+```{r, echo = TRUE}
+# find the minimum distance (in meters) of each point to a large road
+large_dist<- st_distance(y=zebra_sf, x=large_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
+zebra_sf$large_road_dist <- apply(large_dist, 2, min)
+
+# find the minimum distance (in meters) of each point to a small road
+small_dist<- st_distance(y=zebra_sf, x=small_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
+zebra_sf$small_road_dist <- apply(small_dist, 2, min)
+
+head(data.frame(zebra_sf))
+
+
+ggplot(zebra_sf) +
+  geom_histogram(aes(large_road_dist, fill="large roads"), alpha=0.5) +
+  geom_histogram(aes(small_road_dist, fill="small roads"), alpha=0.5) +
+  scale_fill_manual(labels=c("large roads", "small roads"), values=c("blue", "orange"))
+
 ```
 
 ###PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
@@ -451,7 +430,6 @@ Where in North Carolina do four counties touch?
 plot(st_geometry(nc))
 ```
 
-
 ---
 ```{r, echo = TRUE}
 pts <-  st_intersection(nc, nc)
@@ -459,7 +437,6 @@ pts <- pts[st_dimension(pts) == 0, ] # dim of point intersection is 0
 plot(st_geometry(nc))
 plot(st_geometry(pts), add = TRUE, col = '#ff000044', pch = 16)
 ```
-
 
 
 ## Exercise
