@@ -34,14 +34,14 @@ library("ggmap")
 4. Making maps (Compass rose, overlays, etc)
 
 
-## Overview
-1. Motivation
-2. Brief intro to generic spatial data
-3. Brief intro to spatial capabilities in R
-4. Intro to the sf package
-5. Reading and writing spatial data with `sf`
-6. Geometric operations with `sf`
-7. Making maps with `sf` and `ggplot2`
+<!-- ## Overview -->
+<!-- 1. Motivation -->
+<!-- 2. Brief intro to generic spatial data -->
+<!-- 3. Brief intro to spatial capabilities in R -->
+<!-- 4. Intro to the sf package -->
+<!-- 5. Reading and writing spatial data with `sf` -->
+<!-- 6. Geometric operations with `sf` -->
+<!-- 7. Making maps with `sf` and `ggplot2` -->
 
 
 
@@ -382,24 +382,6 @@ ggplot(zebra_sf) +
 
 # PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
-
-
-# Geometric operations
-
-## Types of geometric operations
-Single
-
-* logical predicates: (e.g., `is_valid`, `is_simple`)
-* quantities: (`length`, `area`)
-* dimensions: 0 = points, 1 = linear, 2 = surface
-* derived geometries: `buffer`, `centroid`, `convex_hull` etc.
-
-Pairs or sets
-
-* predicates: `intersects`, `within`, `contains` etc.
-* quantities: `distance`
-* new geometries: `intersection`, `difference`, `union` etc.
-
 
 
 
