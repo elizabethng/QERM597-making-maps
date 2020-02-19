@@ -329,6 +329,7 @@ st_geometry(world) %>% plot()
 2. If we look at our roads data, we see that there are several types of roads in the shapefile. How close or far from different road types do zebra move? 
 
 ## Exercise 1
+Plot road and zebra data
 ```{r, echo = TRUE}
 roads <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% #4326= coordinate system based on Earth's center of mass
   st_transform("+init=epsg:32733") #32733 = spatial reference for Nambia 
