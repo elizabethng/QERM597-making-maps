@@ -187,11 +187,11 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
 * ISO standard supported by lots of software
 
 ## Basic structure
-* `sf` objects are extended `data.frame`s or `tibble`s
+* `sf` (simple feature) objects are extended `data.frame`s or `tibble`s
   - attribute data stored as `tibble`
   - geometry stored as a list column
   - can have multiple types of geometry in one object
-* class is `sfc` with bounding box `bbox` and `CRS` attributes
+* class is `sfc` (simple feature columns) with bounding box `bbox` and `CRS` (coordinate reference system) attributes
 
 
 
@@ -211,24 +211,28 @@ print(nc)
 * `sf` functions begin with `st_`
 * Methods for `summary`, `plot`
 * `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
+```{r echo = TRUE}
+methods(class = "sf")
+```
 
 
 ---
 ```{r echo = TRUE}
-st_geometry(nc) %>% plot
+st_geometry(nc) %>% plot 
 ```
 
 ---
 ```{r echo = TRUE}
 # Default methods for objects
 plot(nc)
+
+plot(nc[,3])
 ```
 
 ---
 ```{r echo = TRUE}
 filter(nc, AREA > 0.2)
 ```
-
 
 # Reading and writing data
 
@@ -239,14 +243,14 @@ fileloc <- system.file("shape/nc.shp", package = "sf")
 nc <- read_sf(fileloc)
 ```
 
-* used to convert coordinates (do projections) and do datum transformations
+* st_crs() used to convert coordinates (do projections) and do datum transformations
 * Proj.4 string or ESPG code contains this info
 * [Web](https://spatialreference.org/) [repositories](https://georepository.com/home.html) for ESPG and Proj.4 information
 
 ---
 ```{r echo = TRUE}
 st_crs("+proj=longlat +datum=WGS84") # Proj.4 string"
-st_crs(3857)                         # ESPG code: public registry of spatial reference systems, 3857 = wen-based mapping (i.e. Google                                         maps, OpenStreetMap)
+st_crs(3857)                         # ESPG code: public registry of spatial reference systems, 3857 = web-based mapping (i.e. Google                                         maps, OpenStreetMap)
 st_crs(3857)$units                   # check units
 st_crs(NA)                           # unknown (assumed planar/Cartesian)
 ```
@@ -293,7 +297,9 @@ head(hotsprings_df)
 ```
 
 ## Convert long/lat data
-Assume that these data are WGS84 (`crs = 4326`)
+* Assume that these data are WGS84 (`crs = 4326`)
+* WGS84: World Geodic System 1984
+* 4326=coordinate system based on Earth's center of mass
 ```{r, echo = TRUE}
 hotsprings <- st_as_sf(hotsprings_df,
                        coords = c("LONG", "LAT"),
@@ -319,7 +325,6 @@ st_geometry(world) %>% plot()
 
 ## Exercise 1
 ```{r, echo = TRUE}
-
 roads <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% #4326= coordinate system based on Earth's center of mass
   st_transform("+init=epsg:32733") #32733 = spatial reference for Nambia 
 
@@ -342,6 +347,7 @@ How close or far from different road types do zebra move?
 ```{r, echo = TRUE}
 unique(roads$TYPE)
 
+#Filter roads based off type:
 large_roads <- filter(roads, TYPE %in% c("Tar", "Gravel"))
 small_roads <- filter(roads, TYPE %in% c("Graded", "Track"))
 
@@ -349,18 +355,17 @@ ggplot() +
   geom_sf(data=large_roads, size=1.5) + 
   geom_sf(data=small_roads, size=0.6) + 
   geom_sf(data=zebra_sf, aes(color=ID))
-```
-```{r, echo = TRUE}
-# find the minimum distance (in meters) of each point to a large road
+
+
+# Find the minimum distance (in meters) of each point to a large road
 large_dist<- st_distance(y=zebra_sf, x=large_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
 zebra_sf$large_road_dist <- apply(large_dist, 2, min)
 
-# find the minimum distance (in meters) of each point to a small road
+# Find the minimum distance (in meters) of each point to a small road
 small_dist<- st_distance(y=zebra_sf, x=small_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
 zebra_sf$small_road_dist <- apply(small_dist, 2, min)
 
 head(data.frame(zebra_sf))
-
 
 ggplot(zebra_sf) +
   geom_histogram(aes(large_road_dist, fill="large roads"), alpha=0.5) +
