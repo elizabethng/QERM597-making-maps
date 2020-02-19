@@ -329,7 +329,6 @@ st_geometry(world) %>% plot()
 2. If we look at our roads data, we see that there are several types of roads in the shapefile. How close or far from different road types do zebra move? 
 
 ## Exercise 1
-Plot road and zebra data
 ```{r, echo = TRUE}
 roads <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% #4326= coordinate system based on Earth's center of mass
   st_transform("+init=epsg:32733") #32733 = spatial reference for Nambia 
@@ -384,6 +383,19 @@ ggplot(zebra_sf) +
 # PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 
+
+#Reading raster data 
+#Converting projection
+#Writing raster data
+#Extracting data
+
+#EXERCISES
+#1. Load the NDVI raster file and plot. Overlay Zebra location 
+#2. Extract NDVI at zebra locations
+#3. Plot zebra location data. Color points according to NDVI values
+
+
+#Exercise 1
 ```{r echo = FALSE, fig.align="center"}
 #Step 1: Get raster (.tiff) file into workspace
 NDVI_mean <- raster("ndvi_mean_utm.tif") * 0.0001
@@ -395,12 +407,18 @@ NDVI_mean %>%
   data.frame() %>%
   ggplot() + geom_raster(aes(x=x, y=y, fill=ndvi_mean_utm)) +
   geom_sf(data=zebra_sf, size=0.7,col="black")
+```
 
+
+#Exercise 2
+```{r echo = FALSE, fig.align="center"}
 #Step 3: Extract NDVI a locations
 zebra_sf$NDVI_mean <- raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
 
 head(data.frame(zebra_sf))
+```
 
+```{r echo = FALSE, fig.align="center"}
 #Step 4: Plot locations colored by NDVI
 ggplot(zebra_sf) +
   geom_sf(aes(color=NDVI_mean)) + 
@@ -410,9 +428,7 @@ ggplot(zebra_sf) +
 ```
 
 
-#####ADD MULTIDIMENSIONAL ANALYSIS
-#####EXERCISE 1
-#####EXERCISE 2
+#####Acknowledge existance of multidimenional data and packages. netCDF files
 
 
 # PART III: MAKING NICE MAPS
