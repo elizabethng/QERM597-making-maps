@@ -513,3 +513,58 @@ ggmap(sat_basemap, maprange=FALSE, base_layer=ggplot(aes(x=1, y=1), data=NULL)) 
 - An alternative package is `RgoogleMaps`
 - No need to get Google API key (yay!)
 - Does not seems to be compatible with `ggplot2` (boo)
+
+
+# PART IV: Making it pretty for publication
+
+## Things to tweak
+- Fix the legend
+- Add a scale bar and north arrow
+- Annotations
+- Inset maps
+
+
+## Natural earth package to access other data
+```{r}
+# Natural earth 1 with shaded relief and drainages
+# address <- "https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/raster/NE1_HR_LC_SR_W_DR.zip"
+# utils::download.file(file.path(address), zip_file <- tempfile(), method = "libcurl")
+# options("download.file.method" = "libcurl")
+# countries10 <- ne_download(scale = 10, type = 'countries', category = 'cultural', returnclass = "sf")
+ne_basemap <- ne_download(scale = "large", 
+                          type = "NE1_HR_LC_SR_W_DR", 
+                          category = "raster", 
+                          returnclass = "sf")
+```
+
+
+## Fix the legend
+```{r new-colors}
+# ggmap(sat_basemap) +
+q0 <- ggplot() +
+  geom_sf(data = large_roads, size = 1.5, color = "grey", inherit.aes = FALSE) + 
+  geom_sf(data = small_roads, size = 0.6, color = "grey", inherit.aes = FALSE) + 
+  geom_sf(data = zebra_sf, aes(color = large_road_dist/1000), alpha = 0.1, inherit.aes = FALSE) +
+  scale_color_viridis_c(
+    name = "Distance from \n large road (km)",
+    direction = -1,
+    option = "cividis") +
+  # coord_sf(crs = st_crs(4326)) +
+  labs(x = "Longitude", y = "Lattitude") +
+  theme_bw() +
+  theme(panel.grid.major = element_line(color = "white"))
+q0
+```
+
+## Add scale bar and north arrow
+```{r north-arrow}
+library("ggspatial")
+
+q1 <- q0 +
+  coord_sf(ylim = c(-20, -18), crs = st_crs(4326)) +
+    annotation_scale(location = "bl", width_hint = 0.5) +
+    annotation_north_arrow(location = "bl", which_north = "true", 
+        pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
+        style = north_arrow_fancy_orienteering)
+q1
+```
