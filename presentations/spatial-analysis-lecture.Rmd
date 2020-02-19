@@ -23,6 +23,7 @@ library("lwgeom")
 library("rnaturalearthdata")
 library("rgeos")
 library("ggmap")
+library("ggspatial")
 # scrape html data
 ```
 
@@ -202,7 +203,7 @@ General workflow:
 
 ---
 ```{r}
-fileloc <- system.file("shape/nc.shp", package = "sf")
+Namibia <- st_read(here("data", "NAM_boundaries.shp"))
 nc <- read_sf(fileloc) %>%
   select(AREA, NAME)
 print(nc)
