@@ -22,15 +22,16 @@ library("htmltab")
 library("lwgeom")
 library("rnaturalearthdata")
 library("rgeos")
+library("ggmap")
 # scrape html data
 ```
 
 
-#Learning Objectives
-#1. Plot vector geospatial data (points/polygons)
-#2. Plot raster geospatial data (image)
-#3. Extracting data from raster
-#4. Making maps (Compass rose, overlays, etc)
+## Learning Objectives
+1. Plot vector geospatial data (points/polygons)
+2. Plot raster geospatial data (image)
+3. Extracting data from raster
+4. Making maps (Compass rose, overlays, etc)
 
 
 ## Overview
@@ -49,65 +50,68 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
 ```
 
 
-#######################################################################
-## Why spatial data?
-##* Interesting spatial questions
-##* Earth is round-ish/spherioid
-##* Maps and screens are flat, so we only see projected data
-##* Projected distances, areas, shapes, and directions are distorted
-##
-#######################################################################
-##HP: I proposed starting with the research question directly. It makes it 
-##obvious why we need spatial data because we have a well defined question 
-##that necessitates it
+<!-- ####################################################################### -->
+<!-- ## Why spatial data? -->
+<!-- ##* Interesting spatial questions -->
+<!-- ##* Earth is round-ish/spherioid -->
+<!-- ##* Maps and screens are flat, so we only see projected data -->
+<!-- ##* Projected distances, areas, shapes, and directions are distorted -->
+<!-- ## -->
+<!-- ####################################################################### -->
+<!-- ##HP: I proposed starting with the research question directly. It makes it  -->
+<!-- ##obvious why we need spatial data because we have a well defined question  -->
+<!-- ##that necessitates it -->
 
 ## Motivation
-*We are researchers who want to answer the question "What range of environmental conditions do *taxon* tend to inhabit?"
-*General workflow
+We are researchers who want to answer the question "What range of environmental conditions do *taxon* tend to inhabit?"
+
+General workflow:
+
  - Plot locations of *taxon*
  - Plot map of environmental conditions
  - Plot contextual information 
  - Extract data about environmental conditions at those locations
+ 
 * Variants of this question/workflow are applicable to others study systems.
 
 
 
-## Reference systems
-##* [Geodesic/geographic coordinates](https://edzer.github.io/rstudio_conf/#6) need
-##  - Order (lat/long vs long/lat)
-##  - Units (rad, arc_degree)
-##  - Datum (aka reference ellipsoid)
-##    <!-- * how are we describing the shape of the Earth? -->
-##    <!-- * "best" approximation depends on region and scale -->
-##    <!--   - what origin is used? -->
-##    <!--   - tectonic plates move over time -->
-##    <!--   - e.g., WGS84, is an approximate model of Earth at sea level updated in 2004 -->
-##* [Cartesian/projected coordinates](https://www.axismaps.com/guide/general/map-projections/) need
-##  - Units (km, m)
-##  - Relationship to a datum/geodesic coordinates
-##  - How to display 3D object in 2D
-##  - Accurately display one of: area (Mercator), form (Azimuthal Equidistant), distance (Equirectangular)
-##  <!-- - choice depends on what you're conveying, shape of the region -->
-##  <!-- - e.g., use Tranverse Mercator for mapping long N-S region like Chile -->
-##* Two separate issues: how do we model Earth (datum) and how do we display it on a flat surface (projection)
+<!-- ## Reference systems -->
+<!-- ##* [Geodesic/geographic coordinates](https://edzer.github.io/rstudio_conf/#6) need -->
+<!-- ##  - Order (lat/long vs long/lat) -->
+<!-- ##  - Units (rad, arc_degree) -->
+<!-- ##  - Datum (aka reference ellipsoid) -->
+<!-- ##    <!-- * how are we describing the shape of the Earth? --> -->
+<!-- ##    <!-- * "best" approximation depends on region and scale --> -->
+<!-- ##    <!--   - what origin is used? --> -->
+<!-- ##    <!--   - tectonic plates move over time --> -->
+<!-- ##    <!--   - e.g., WGS84, is an approximate model of Earth at sea level updated in 2004 --> -->
+<!-- ##* [Cartesian/projected coordinates](https://www.axismaps.com/guide/general/map-projections/) need -->
+<!-- ##  - Units (km, m) -->
+<!-- ##  - Relationship to a datum/geodesic coordinates -->
+<!-- ##  - How to display 3D object in 2D -->
+<!-- ##  - Accurately display one of: area (Mercator), form (Azimuthal Equidistant), distance (Equirectangular) -->
+<!-- ##  <!-- - choice depends on what you're conveying, shape of the region --> -->
+<!-- ##  <!-- - e.g., use Tranverse Mercator for mapping long N-S region like Chile --> -->
+<!-- ##* Two separate issues: how do we model Earth (datum) and how do we display it on a flat surface (projection) -->
 
 
-##<!-- ## Models of a round-ish Earth -->
-##<!-- * There are different models of the Earth -->
-##<!-- * Meaning of coordinates (lon/lat) depend on the geodetic datum -->
-##<!-- * "_Geodetic datum_ is a coordinate reference system and a set of reference points used to locate places on Earth"[Wikipedia](https://en.m.wikipedia.org/wiki/Geodetic_datum) -->
-##<!-- * "a datum is unlikely important when mapping continents, but it is when when drones try to deliver pizza" -[Edzer ##Pebesma]https://edzer.github.io/rstudio_conf/#6) -->
-##<!-- * Depend on the scale (big or small matter more? where you are matters?) -->
-##<!-- * On one hand, small areas are more easily modeled as a flat surface -->
-##<!-- * But get your model wrong from continent to drone delivery matters -->
-##<!-- * Model is described in a coordinate reference system (CRS) -->
-##<!-- * Two types -->
-##<!--   - geographic CRS (lon/lat) gives distance from the origin in degrees -->
-##<!--   - projected CRS (easting/northing) gives distance from the origin in km -->
-##<!-- - [ ] Datum?? -->
-##################################################################################################################
-##HP: In the interest of time, I propose that we limit our discussion of projections. All we really need to mention is that 
-## there are a variety of geospatial models of the earth, and that it is critical that all your data are assuming the same model. 
+<!-- ##<!-- ## Models of a round-ish Earth --> -->
+<!-- ##<!-- * There are different models of the Earth --> -->
+<!-- ##<!-- * Meaning of coordinates (lon/lat) depend on the geodetic datum --> -->
+<!-- ##<!-- * "_Geodetic datum_ is a coordinate reference system and a set of reference points used to locate places on Earth"[Wikipedia](https://en.m.wikipedia.org/wiki/Geodetic_datum) --> -->
+<!-- ##<!-- * "a datum is unlikely important when mapping continents, but it is when when drones try to deliver pizza" -[Edzer ##Pebesma]https://edzer.github.io/rstudio_conf/#6) --> -->
+<!-- ##<!-- * Depend on the scale (big or small matter more? where you are matters?) --> -->
+<!-- ##<!-- * On one hand, small areas are more easily modeled as a flat surface --> -->
+<!-- ##<!-- * But get your model wrong from continent to drone delivery matters --> -->
+<!-- ##<!-- * Model is described in a coordinate reference system (CRS) --> -->
+<!-- ##<!-- * Two types --> -->
+<!-- ##<!--   - geographic CRS (lon/lat) gives distance from the origin in degrees --> -->
+<!-- ##<!--   - projected CRS (easting/northing) gives distance from the origin in km --> -->
+<!-- ##<!-- - [ ] Datum?? --> -->
+<!-- ################################################################################################################## -->
+<!-- ##HP: In the interest of time, I propose that we limit our discussion of projections. All we really need to mention is that  -->
+<!-- ## there are a variety of geospatial models of the earth, and that it is critical that all your data are assuming the same model.  -->
 
 
 ## Representation of spatial data
@@ -119,11 +123,11 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
   - Land-cover type of a polygon
 
 ## To answer our research question, we will need to:
-> 1. Read/write spatial data
-> 2. Represent geographic and attribute data
-> 3. Transform between different models of Earth
-> 4. Geographic operations
-> 5. Make maps
+1. Read/write spatial data
+2. Represent geographic and attribute data
+3. Transform between different models of Earth
+4. Geographic operations
+5. Make maps
 
 
 # Spatial analysis in R
@@ -145,16 +149,17 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
 - `tmap`
 - `leaflet`
 - `mapview`
-#######################################################
-##HP: Leave as is, but we should just say something like "there are many methods available in R for performing geospatial analysis, here 
-## is a sample of some of the choices that you can also explore, but we limit ourseleves in scope to packages A,B,C,....
+<!-- ####################################################### -->
+<!-- ##HP: Leave as is, but we should just say something like "there are many methods available in R for performing geospatial analysis, here  -->
+<!-- ## is a sample of some of the choices that you can also explore, but we limit ourseleves in scope to packages A,B,C,.... -->
 
 
-##QUESTION FOR ALL###
-##Which packages will we be exploring? Make sure my list is accurate. 
-##1. "sf"
-##2. "raster"
-##3. "naturalearth"
+<!-- QUESTION FOR ALL### -->
+<!-- Which packages will we be exploring? Make sure my list is accurate.  -->
+<!-- 1. "sf" -->
+<!-- 2. "raster" -->
+<!-- 3. "naturalearth" -->
+<!-- 4. "ggmap" -->
 
 
 ## My choice: `sf`
@@ -175,8 +180,8 @@ knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
   - includes theory, examples, and covers rasters
 
 
-###PART I: PLOTTING POINT AND SHAPEFILE DATA
-###DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
+# PART I: PLOTTING POINT AND SHAPEFILE DATA
+# DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 
 # `sf` package
 
@@ -342,6 +347,7 @@ ggplot() +
   geom_sf(data=zebra_sf, aes(color=ID))
 
 ```
+
 ## Exercise 2
 How close or far from different road types do zebra move? 
 ```{r, echo = TRUE}
@@ -374,8 +380,8 @@ ggplot(zebra_sf) +
 
 ```
 
-###PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
-###DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
+# PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
+# DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 
 
 # Geometric operations
@@ -395,106 +401,108 @@ Pairs or sets
 * new geometries: `intersection`, `difference`, `union` etc.
 
 
-## Methods for simple features
-```{r, echo = TRUE}
-methods(class = "sf")
-```
-
-```{r}
-nc <- st_transform(nc, 32119) # NC state plane, m
-```
-
-## Logical operations
-```{r, echo = TRUE}
-nc1 <- nc[1:5, ]
-st_intersects(nc1, nc1, sparse = FALSE)
-```
-
-## Geometry generating operations
-```{r, echo = TRUE}
-opar <- par(mfrow = c(1,2))
-ncg <- st_geometry(nc[1:3,])
-plot(ncg, col = sf.colors(3, categorical = TRUE))
-
-u <- st_union(ncg)
-plot(u, lwd = 2)
-
-plot(st_intersection(ncg[1], ncg[2]), col = 'red', add = TRUE) # border
-plot(st_buffer(u, 10000), border = 'blue', add = TRUE)  # outer buffer
-plot(st_buffer(u, -5000), border = 'green', add = TRUE) # inner buffer
-```
-
-```{r}
-par(mfrow = c(1,1))
-```
 
 
-## More complicated example
-Where in North Carolina do four counties touch?
-```{r}
-plot(st_geometry(nc))
-```
 
----
-```{r, echo = TRUE}
-pts <-  st_intersection(nc, nc)
-pts <- pts[st_dimension(pts) == 0, ] # dim of point intersection is 0
-plot(st_geometry(nc))
-plot(st_geometry(pts), add = TRUE, col = '#ff000044', pch = 16)
-```
-
-
-## Exercise
-How many hot springs are in Lake Tahoe?
-
-## Solution
-```{r, echo = TRUE}
-hotsprings <- st_transform(hotsprings, 2228) # California zone 3
-tahoe <- st_transform(tahoe, 2228)
-tahoe_hotsprings <- st_intersection(tahoe, hotsprings)
-
-plot(st_geometry(hotsprings))
-plot(st_geometry(tahoe), add = TRUE, col = "blue")
-plot(st_geometry(tahoe_hotsprings), add = TRUE, col = "red")
-```
-
-
-###PART III: MAKING NICE MAPS
-
-
-# Making maps with `sf` and `ggplot2`
+# PART III: MAKING NICE MAPS
 
 ## Basics
-* interfaces with `ggplot2` using `geom_sf`
+- Making maps with `sf` and `ggplot2`
+- interfaces with `ggplot2` using `geom_sf`
 
----
-```{r}
-hotsprings <- st_transform(hotsprings, 4326) # California zone 3
-tahoe <- st_transform(tahoe, 4326)
+## Adding basemaps!
+- Focus on `ggmap`
+- As of mid-2018, requires registering with Google and obtaining an API key
+- Requires providing a valid credit card (yikes!), though charges are nonexistent or at least very minimal
+- See the `ggmap` [GitHub page](https://github.com/dkahle/ggmap) for more information about API keys
+
+## Basemap options from `ggmap`
+- Basemaps available from Google, Stamen, or Open Street Map
+- Terrain, satellite, or watercolor
+- See this helpful [cheat sheet](https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/ggmap/ggmapCheatsheet.pdf)
+
+## Making maps using `ggmap`
+Two steps:
+
+- Download basemap raster
+- Plot raster and overlay other spatial data
+
+## Register API key at start of session
+
+This is my personal API key, which you can use for the purposes of this class!
+
+```{r API key, echo=TRUE}
+register_google(key = "AIzaSyBRkw_wzDKuWZDikdD86Kmp1Sa6PzuCKFc")
 ```
 
+## Stamen basemaps
 
-```{r echo = TRUE}
-ggplot() +
-  geom_sf(data = tahoe, fill = "light blue") +
-  geom_sf(data = hotsprings, size = 4, shape = 23, fill = "darkred") +
-  coord_sf(xlim = c(-121, -119), ylim = c(38, 40))
+To add a Stamen basemap, first define the bounding box for the basemap you would like to download.
+
+```{r Stamen bbox, echo=TRUE}
+zebra_bbox <- c(14, -20, 17.5, -18)
+names(zebra_bbox) <- c("left", "bottom", "right", "top")
 ```
 
-## More complicated
+## Stamen basemaps: terrain
+```{r Stamen terrain, echo=TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+terr_basemap <- get_stamenmap(bbox=zebra_bbox, zoom=9, maptype="terrain")
 
-<img src=https://timogrossenbacher.ch/wp-content/uploads/2019/04/bm-thematic-bivariate-map-with-legend-1-2-1024x768.png" width ="600"/> 
+ggmap(terr_basemap) +
+  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
+  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
+  coord_sf(crs = st_crs(4326))
+```
 
-[Timo Grossenbacher](https://timogrossenbacher.ch/2019/04/bivariate-maps-with-ggplot2-and-sf/)
+## Stamen basemaps: watercolor
+```{r Stamen watercolor, echo=TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+wat_basemap <- get_stamenmap(bbox=zebra_bbox, zoom=9, maptype="watercolor")
 
-## Exercise
-Work through [this example from r-spatial](https://www.r-spatial.org/r/2018/10/25/ggplot2-sf.html)
+ggmap(wat_basemap) +
+  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
+  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
+  coord_sf(crs = st_crs(4326))
+```
 
-# What about other types of data?
+## Google basemaps
 
-## `stars`
-* support for raster and vector data cubes (arrays)
-* support for long time series on vector data
-* deal with data sets larger than local memory
-* finished 2018 (??)
-* more info [here](https://r-spatial.github.io/stars/)
+To add a Google basemap, first define the center coordinates for the basemap you would like to download.
+
+```{r Google center, echo=TRUE}
+zebra_center <- c(15.8, -19)
+names(zebra_center) <- c("lon", "lat")
+```
+
+## Google basemaps: satellite
+```{r Google satellite, echo=TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+sat_basemap <- get_googlemap(center=zebra_center, zoom=8, size=c(640, 640), scale=2,
+                             maptype="satellite")
+ggmap(sat_basemap) +
+  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
+  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
+  coord_sf(crs = st_crs(4326))
+```
+
+## Google basemaps: satellite
+
+Notice that `get_googlemap()` returns a square basemap tile, which then sets the plotting limits of your map.
+
+To manually set different plotting limits, pass in an empty "base layer" and set x and y limits using `ggplot()`.
+
+## Google basemaps: satellite
+```{r Google sat manual limits, echo=TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+ggmap(sat_basemap, maprange=FALSE, base_layer=ggplot(aes(x=1, y=1), data=NULL)) +
+  xlim(14.3, 17.4) + ylim(-20, -18) + xlab("lon") + ylab("lat") +
+  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
+  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
+  coord_sf(crs = st_crs(4326))
+```
+
+## Adding basemaps: alternative approaches
+- An alternative package is `RgoogleMaps`
+- No need to get Google API key (yay!)
+- Does not seems to be compatible with `ggplot2` (boo)
