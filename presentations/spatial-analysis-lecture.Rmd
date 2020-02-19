@@ -385,10 +385,28 @@ ggplot(zebra_sf) +
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 
 
-#Reading raster data 
+#Reading raster data
+```{r echo = FALSE, fig.align="center"}
+#Reading raster data into workspace
+raster("ndvi_mean_utm.tif")#From a file in your directory
+raster("ndvi_mean_utm.tif")#Other method
+raster("ndvi_mean_utm.tif")#Yet another method
+```
+
 #Converting projection
+```{r echo = FALSE, fig.align="center"}
+#Some manipulation
+```
+
+
 #Writing raster data
+```{r echo = FALSE, fig.align="center"}
+#Some manipulation
+```
 #Extracting data
+```{r echo = FALSE, fig.align="center"}
+#Some manipulation
+```
 
 #EXERCISES
 #1. Load the NDVI raster file and plot. Overlay Zebra location 
