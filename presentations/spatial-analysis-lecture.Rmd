@@ -33,48 +33,24 @@ library("raster")
 1. Plot vector geospatial data (points/polygons)
 2. Plot raster geospatial data (image)
 3. Extracting data from raster
-4. Making maps (Compass rose, overlays, etc)
+4. Making maps (base maps, compass rose, overlays, etc)
 
-
-<!-- ## Overview -->
-<!-- 1. Motivation -->
-<!-- 2. Brief intro to generic spatial data -->
-<!-- 3. Brief intro to spatial capabilities in R -->
-<!-- 4. Intro to the sf package -->
-<!-- 5. Reading and writing spatial data with `sf` -->
-<!-- 6. Geometric operations with `sf` -->
-<!-- 7. Making maps with `sf` and `ggplot2` -->
-
-
-
+## Motivation
 ```{r echo = FALSE, fig.align="center"}
 knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
 ```
 
-
-<!-- ####################################################################### -->
-<!-- ## Why spatial data? -->
-<!-- ##* Interesting spatial questions -->
-<!-- ##* Earth is round-ish/spherioid -->
-<!-- ##* Maps and screens are flat, so we only see projected data -->
-<!-- ##* Projected distances, areas, shapes, and directions are distorted -->
-<!-- ## -->
-<!-- ####################################################################### -->
-<!-- ##HP: I proposed starting with the research question directly. It makes it  -->
-<!-- ##obvious why we need spatial data because we have a well defined question  -->
-<!-- ##that necessitates it -->
-
 ## Motivation
-We are researchers who want to answer the question "What range of environmental conditions do *taxon* tend to inhabit?"
+We are researchers who want to answer the question "What range of environmental conditions do *zebra* tend to inhabit?"
 
 General workflow:
 
- - Plot locations of *taxon*
+ - Plot locations of *zebra*
  - Plot map of environmental conditions
  - Plot contextual information 
  - Extract data about environmental conditions at those locations
  
-* Variants of this question/workflow are applicable to others study systems.
+Variants of this question/workflow are applicable to other study systems.
 
 
 
@@ -83,34 +59,34 @@ General workflow:
 <!-- ##  - Order (lat/long vs long/lat) -->
 <!-- ##  - Units (rad, arc_degree) -->
 <!-- ##  - Datum (aka reference ellipsoid) -->
-<!-- ##    <!-- * how are we describing the shape of the Earth? --> -->
-<!-- ##    <!-- * "best" approximation depends on region and scale --> -->
-<!-- ##    <!--   - what origin is used? --> -->
-<!-- ##    <!--   - tectonic plates move over time --> -->
-<!-- ##    <!--   - e.g., WGS84, is an approximate model of Earth at sea level updated in 2004 --> -->
+<!-- ##    <!-- * how are we describing the shape of the Earth? -->
+<!-- ##    <!-- * "best" approximation depends on region and scale -->
+<!-- ##    <!--   - what origin is used? -->
+<!-- ##    <!--   - tectonic plates move over time -->
+<!-- ##    <!--   - e.g., WGS84, is an approximate model of Earth at sea level updated in 2004 -->
 <!-- ##* [Cartesian/projected coordinates](https://www.axismaps.com/guide/general/map-projections/) need -->
 <!-- ##  - Units (km, m) -->
 <!-- ##  - Relationship to a datum/geodesic coordinates -->
 <!-- ##  - How to display 3D object in 2D -->
 <!-- ##  - Accurately display one of: area (Mercator), form (Azimuthal Equidistant), distance (Equirectangular) -->
-<!-- ##  <!-- - choice depends on what you're conveying, shape of the region --> -->
-<!-- ##  <!-- - e.g., use Tranverse Mercator for mapping long N-S region like Chile --> -->
+<!-- ##  <!-- - choice depends on what you're conveying, shape of the region -->
+<!-- ##  <!-- - e.g., use Tranverse Mercator for mapping long N-S region like Chile -->
 <!-- ##* Two separate issues: how do we model Earth (datum) and how do we display it on a flat surface (projection) -->
 
 
-<!-- ##<!-- ## Models of a round-ish Earth --> -->
-<!-- ##<!-- * There are different models of the Earth --> -->
-<!-- ##<!-- * Meaning of coordinates (lon/lat) depend on the geodetic datum --> -->
-<!-- ##<!-- * "_Geodetic datum_ is a coordinate reference system and a set of reference points used to locate places on Earth"[Wikipedia](https://en.m.wikipedia.org/wiki/Geodetic_datum) --> -->
-<!-- ##<!-- * "a datum is unlikely important when mapping continents, but it is when when drones try to deliver pizza" -[Edzer ##Pebesma]https://edzer.github.io/rstudio_conf/#6) --> -->
-<!-- ##<!-- * Depend on the scale (big or small matter more? where you are matters?) --> -->
-<!-- ##<!-- * On one hand, small areas are more easily modeled as a flat surface --> -->
-<!-- ##<!-- * But get your model wrong from continent to drone delivery matters --> -->
-<!-- ##<!-- * Model is described in a coordinate reference system (CRS) --> -->
-<!-- ##<!-- * Two types --> -->
-<!-- ##<!--   - geographic CRS (lon/lat) gives distance from the origin in degrees --> -->
-<!-- ##<!--   - projected CRS (easting/northing) gives distance from the origin in km --> -->
-<!-- ##<!-- - [ ] Datum?? --> -->
+<!-- ##<!-- ## Models of a round-ish Earth -->
+<!-- ##<!-- * There are different models of the Earth -->
+<!-- ##<!-- * Meaning of coordinates (lon/lat) depend on the geodetic datum -->
+<!-- ##<!-- * "_Geodetic datum_ is a coordinate reference system and a set of reference points used to locate places on Earth"[Wikipedia](https://en.m.wikipedia.org/wiki/Geodetic_datum) -->
+<!-- ##<!-- * "a datum is unlikely important when mapping continents, but it is when when drones try to deliver pizza" -[Edzer ##Pebesma]https://edzer.github.io/rstudio_conf/#6) -->
+<!-- ##<!-- * Depend on the scale (big or small matter more? where you are matters?) -->
+<!-- ##<!-- * On one hand, small areas are more easily modeled as a flat surface -->
+<!-- ##<!-- * But get your model wrong from continent to drone delivery matters -->
+<!-- ##<!-- * Model is described in a coordinate reference system (CRS) -->
+<!-- ##<!-- * Two types -->
+<!-- ##<!--   - geographic CRS (lon/lat) gives distance from the origin in degrees -->
+<!-- ##<!--   - projected CRS (easting/northing) gives distance from the origin in km -->
+<!-- ##<!-- - [ ] Datum?? -->
 <!-- ################################################################################################################## -->
 <!-- ##HP: In the interest of time, I propose that we limit our discussion of projections. All we really need to mention is that  -->
 <!-- ## there are a variety of geospatial models of the earth, and that it is critical that all your data are assuming the same model.  -->
@@ -120,9 +96,9 @@ General workflow:
 - *Vector data model* uses points, lines, and polygons (e.g. locations of animals, ecosystem types)
 - *Raster data model* divides surface into cells of constant size (e.g. gridded temperature)
 - Non spatial attribute data
-  - How many counts at a point?
-  - Length of a transect
-  - Land-cover type of a polygon
+    - How many counts at a point?
+    - Length of a transect
+    - Land-cover type of a polygon
 
 ## To answer our research question, we will need to:
 1. Read/write spatial data
@@ -172,18 +148,14 @@ General workflow:
 
 ## Resources
 * [Simple Features package](https://r-spatial.github.io/sf/index.html)
-  - Vignettes, blogs, presentations
-  - [Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf)
-  - [issue tracker](https://github.com/r-spatial/sf/issues/)
+    - Vignettes, blogs, presentations
+    - [Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf)
+    - [issue tracker](https://github.com/r-spatial/sf/issues/)
 * [r-spatial](https://www.r-spatial.org/about/) Edzer Pebesma's blog
 * [Spatial Data Science](https://keen-swartz-3146c4.netlify.com/)
 * [Geocomputation with R](https://geocompr.robinlovelace.net/)
-  - excellent in-depth treatment
-  - includes theory, examples, and covers rasters
-
-
-# PART I: PLOTTING POINT AND SHAPEFILE DATA
-# DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
+    - excellent in-depth treatment
+    - includes theory, examples, and covers rasters
 
 # `sf` package
 
@@ -201,7 +173,16 @@ General workflow:
 * class is `sfc` (simple feature columns) with bounding box `bbox` and `CRS` (coordinate reference system) attributes
 
 
+## `sf` and `tidyverse`
+* `sf` functions begin with `st_`
+* Methods for `summary`, `plot`
+* `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
+```{r echo = TRUE}
+methods(class = "sf")
+```
 
+
+# PART I: PLOTTING POINT AND SHAPEFILE DATA
 ---
 ```{r}
 Namibia <- st_read(here("data", "NAM-level_1.shp"))
@@ -218,15 +199,6 @@ head(roads)
 # 2. feature geometry (sfg)
 # 3. feature (row)
 ```
-
-## `sf` and `tidyverse`
-* `sf` functions begin with `st_`
-* Methods for `summary`, `plot`
-* `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
-```{r echo = TRUE}
-methods(class = "sf")
-```
-
 
 ---
 ```{r echo = TRUE}
@@ -552,13 +524,13 @@ ggmap(sat_basemap, maprange=FALSE, base_layer=ggplot(aes(x=1, y=1), data=NULL)) 
 ```
 
 ## Adding basemaps: alternative approaches
-- An alternative package is `RgoogleMaps`
-  - No need to get Google API key (yay!)
-  - Does not seems to be compatible with `ggplot2` (boo)
+- One alternative package is `RgoogleMaps`
+    - No need to get Google API key (yay!)
+    - Does not seems to be compatible with `ggplot2` (boo)
 
 - Another approach is to download raster data directly from [Natural Earth](https://www.naturalearthdata.com/downloads/)
-  - Have to download manually from website and import `tif` file as a raster *brick*, then display red/green/blue values
-  - Only works well if you are mapping a large spatial extent (lacks fine resolution)
+    - Have to download manually from website and import `tif` file as a raster *brick*, then display red/green/blue values
+    - Only works well if you are mapping a large spatial extent (lacks fine resolution)
 
 
 # PART IV: Making it pretty for publication
