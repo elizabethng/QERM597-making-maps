@@ -35,23 +35,24 @@ library("raster")
 3. Extracting data from raster
 4. Making maps (base maps, compass rose, overlays, etc)
 
-## Motivation
-```{r echo = FALSE, fig.align="center"}
-knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
-```
 
 ## Motivation
 We are researchers who want to answer the question "What range of environmental conditions do *zebra* tend to inhabit?"
 
 General workflow:
 
- - Plot locations of *zebra*
- - Plot map of environmental conditions
- - Plot contextual information 
- - Extract data about environmental conditions at those locations
+1. Plot locations of *zebra*
+2. Plot map of environmental conditions
+3. Plot contextual information 
+4. Extract data about environmental conditions at those locations
  
 Variants of this question/workflow are applicable to other study systems.
 
+
+## Motivation
+```{r echo = FALSE, fig.align="center"}
+knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
+```
 
 
 <!-- ## Reference systems -->
@@ -92,45 +93,54 @@ Variants of this question/workflow are applicable to other study systems.
 <!-- ## there are a variety of geospatial models of the earth, and that it is critical that all your data are assuming the same model.  -->
 
 
-## Representation of spatial data
-- *Vector data model* uses points, lines, and polygons (e.g. locations of animals, ecosystem types)
-- *Raster data model* divides surface into cells of constant size (e.g. gridded temperature)
-- Non spatial attribute data
-    - How many counts at a point?
-    - Length of a transect
-    - Land-cover type of a polygon
-
 ## To answer our research question, we will need to:
-1. Read/write spatial data
-2. Represent geographic and attribute data
-3. Transform between different models of Earth
-4. Geographic operations
-5. Make maps
+- Read and write spatial data
+- Represent geographic and attribute data
+- Transform between different models of Earth
+- Do geographic operations
+- Make maps
+EN: Do we need this content or does it arise pretty natually from our questions and then get explained by our demos?
+
 
 
 # Spatial analysis in R
 
+## Representation of spatial data
+- *Vector data model* uses points, lines, and polygons (e.g. locations of animals, ecosystem types) and can include nonspatial attribute data
+    - How many counts at a point?
+    - Length of a transect
+    - Land-cover type of a polygon
+- *Raster data model* divides surface into cells of constant size (e.g. gridded temperature)
+
+
 ## R packages for spatial analysis
 - [Many tools for spatial analysis in R](https://cran.r-project.org/web/views/Spatial.html)
-- `rgdal` released in 2003--import from more geographic data formats
-- `sp` released in 2005--creates spatial objects with classes and generic methods for points, lines, polygons, grids, and attribute data (but still lacked ability to do geometric operations)
-- `raster` released in 2010--support for raster operations and more
+- `sf` package for vector data
+    * Developed in 2016 with support from [R consortium](https://github.com/r-spatial/sf/blob/master/PROPOSAL.md)
+    * Based on [simple features ISO standards](https://en.wikipedia.org/wiki/Simple_Features) that are not R specific
+    * Replaces `sp`, `rdgal` for read/write, and `rgeos` for geometric operations
+    * Integrates well with `tidyverse`
+- `raster` package for raster operations and more
+    * Released in 2010
+    * Can support processing very large files
 
-## R packages linking to GIS software
-- `GRASS`, `spgrass6`, and `rgrass7`
-- `RSAGA`, `RPyGeo`, and `RQGIS`
 
-## Visualization
-- `ggplot2`
-- `ggmap`
-- `rasterVis`
-- `tmap`
-- `leaflet`
-- `mapview`
+<!-- - `rgdal` released in 2003--import from more geographic data formats -->
+<!-- - `sp` released in 2005--creates spatial objects with classes and generic methods for points, lines, polygons, grids, and attribute data (but still lacked ability to do geometric operations) -->
+<!-- ## R packages linking to GIS software -->
+<!-- - `GRASS`, `spgrass6`, and `rgrass7` -->
+<!-- - `RSAGA`, `RPyGeo`, and `RQGIS` -->
+
+<!-- ## Visualization -->
+<!-- - `ggplot2` -->
+<!-- - `ggmap` -->
+<!-- - `rasterVis` -->
+<!-- - `tmap` -->
+<!-- - `leaflet` -->
+<!-- - `mapview` -->
 <!-- ####################################################### -->
 <!-- ##HP: Leave as is, but we should just say something like "there are many methods available in R for performing geospatial analysis, here  -->
 <!-- ## is a sample of some of the choices that you can also explore, but we limit ourseleves in scope to packages A,B,C,.... -->
-
 
 <!-- QUESTION FOR ALL### -->
 <!-- Which packages will we be exploring? Make sure my list is accurate.  -->
@@ -140,43 +150,31 @@ Variants of this question/workflow are applicable to other study systems.
 <!-- 4. "ggmap" -->
 
 
-## My choice: `sf`
-* Developed in 2016 with support from [R consortium](https://github.com/r-spatial/sf/blob/master/PROPOSAL.md)
-* Based on [simple features ISO standards](https://en.wikipedia.org/wiki/Simple_Features) that are not R specific
-* Replaces `sp`, `rdgal` for read/write, and `rgeos` for geometric operations
-* Integrates well with `tidyverse`
 
-## Resources
-* [Simple Features package](https://r-spatial.github.io/sf/index.html)
-    - Vignettes, blogs, presentations
-    - [Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf)
-    - [issue tracker](https://github.com/r-spatial/sf/issues/)
-* [r-spatial](https://www.r-spatial.org/about/) Edzer Pebesma's blog
-* [Spatial Data Science](https://keen-swartz-3146c4.netlify.com/)
-* [Geocomputation with R](https://geocompr.robinlovelace.net/)
-    - excellent in-depth treatment
-    - includes theory, examples, and covers rasters
+# Part 1: Plotting vector data
 
-# `sf` package
+<!-- ## Simple features -->
+<!-- * _feature_ "abstraction of real world phenomena" -->
+<!-- * _simple feature_ "feature with all geometric attributes described by piecewise straight lines or planar interpolation between sets of points" -->
+<!-- * Represents geometry using *points*, *lines*, *polygons*, or collections of those features -->
+<!-- * ISO standard supported by lots of software -->
 
-## Simple features
-* _feature_ "abstraction of real world phenomena"
-* _simple feature_ "feature with all geometric attributes described by piecewise straight lines or planar interpolation between sets of points"
-* Represents geometry using *points*, *lines*, *polygons*, or collections of those features
-* ISO standard supported by lots of software
-
-## Basic structure
+## Working with `sf` objects
 * `sf` (simple feature) objects are extended `data.frame`s or `tibble`s
   - attribute data stored as `tibble`
   - geometry stored as a list column
   - can have multiple types of geometry in one object
-* class is `sfc` (simple feature columns) with bounding box `bbox` and `CRS` (coordinate reference system) attributes
+* class is `sfc` (simple feature columns) with useful components like
+  * bounding box `bbox` 
+  * `CRS` (coordinate reference system) attributes
 
 
 ## `sf` and `tidyverse`
 * `sf` functions begin with `st_`
 * Methods for `summary`, `plot`
 * `sf` methods for `filter`, `arrange`, `distinct`, `group_by`, `ungroup`, `mutate`
+
+## Look at all the methods...
 ```{r echo = TRUE}
 methods(class = "sf")
 ```
@@ -630,4 +628,18 @@ ggplot() +
 #             color = "darkblue", fontface = "bold", check_overlap = FALSE)
 # q2
 ```
+
+
+# Thank you!
+
+## Additional Resources
+* [Simple Features package](https://r-spatial.github.io/sf/index.html)
+    - Vignettes, blogs, presentations
+    - [Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf)
+    - [issue tracker](https://github.com/r-spatial/sf/issues/)
+* [r-spatial](https://www.r-spatial.org/about/) Edzer Pebesma's blog
+* [Spatial Data Science](https://keen-swartz-3146c4.netlify.com/)
+* [Geocomputation with R](https://geocompr.robinlovelace.net/)
+    - excellent in-depth treatment
+    - includes theory, examples, and covers rasters
 
