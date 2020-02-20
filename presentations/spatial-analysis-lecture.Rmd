@@ -203,10 +203,15 @@ General workflow:
 
 ---
 ```{r}
-Namibia <- st_read(here("data", "NAM_boundaries.shp"))
-nc <- read_sf(fileloc) %>%
-  select(AREA, NAME)
-print(nc)
+Namibia <- st_read(here("data", "NAM-level_1.shp"))
+class(Namibia)
+head(Namibia)
+
+roads <- st_read(here("data", "enproads.shp"))
+class(roads)
+head(roads)
+
+
 # Highlight parts
 # 1. list column (aka sfc)
 # 2. feature geometry (sfg)
@@ -224,20 +229,24 @@ methods(class = "sf")
 
 ---
 ```{r echo = TRUE}
-st_geometry(nc) %>% plot 
+st_geometry(Namibia) %>% plot 
+
+plot(st_geometry(roads))
 ```
 
 ---
 ```{r echo = TRUE}
 # Default methods for objects
-plot(nc)
+plot(Namibia)
+plot(Namibia[,3])
 
-plot(nc[,3])
+plot(roads)
+plot(roads[,1])
 ```
 
 ---
 ```{r echo = TRUE}
-filter(nc, AREA > 0.2)
+plot(filter(roads[,3], KM > 20))
 ```
 
 # Reading and writing data
