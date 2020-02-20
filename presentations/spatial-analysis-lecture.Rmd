@@ -535,14 +535,39 @@ ggmap(sat_basemap, maprange=FALSE, base_layer=ggplot(aes(x=1, y=1), data=NULL)) 
 # utils::download.file(file.path(address), zip_file <- tempfile(), method = "libcurl")
 # options("download.file.method" = "libcurl")
 # countries10 <- ne_download(scale = 10, type = 'countries', category = 'cultural', returnclass = "sf")
-ne_basemap <- ne_download(scale = "large", 
-                          type = "NE1_HR_LC_SR_W_DR", 
-                          category = "raster", 
-                          returnclass = "sf")
+# ne_basemap <- ne_download(scale = "large", 
+#                           type = "NE1_HR_LC_SR_W_DR", 
+#                           category = "raster", 
+#                           returnclass = "sf")
+
+ne_namibia <- ne_countries(scale = "medium", country = "namibia", returnclass = "sf")
+ne_africa <- ne_countries(scale = "medium", continent = "africa", returnclass = "sf")
+ne_feature <- ne_download(scale = 10, category = "physical", type = "rivers_lake_centerlines", returnclass = "sf") 
+africa_rivers <- st_intersection(ne_feature, ne_africa)
+
+ggplot() + 
+  geom_sf(data = ne_africa) + 
+  geom_sf(data = ne_namibia, fill = "grey") +
+  geom_sf(data = africa_rivers, color = "blue")
 ```
 
 
 ## Fix the legend
+```{r}
+q <- ggplot() +
+  geom_sf(data = large_roads, size = 1.5, color = "grey", inherit.aes = FALSE) + 
+  geom_sf(data = small_roads, size = 0.6, color = "grey", inherit.aes = FALSE) + 
+  geom_sf(data = zebra_sf, aes(color = ID), alpha = 0.1, inherit.aes = FALSE, show.legend = "point") +
+  scale_color_manual(values = viridis::magma(length(unique(zebra_sf$ID)))) +
+  theme(legend.key = element_rect(fill = NA)) + # remove background of legend keys
+  guides(color = guide_legend(override.aes = list(alpha = 1))) # make the legend keys 100% opaque
+q
+
+```
+
+
+
+
 ```{r new-colors}
 # ggmap(sat_basemap) +
 q0 <- ggplot() +
@@ -572,3 +597,23 @@ q1 <- q0 +
         style = north_arrow_fancy_orienteering)
 q1
 ```
+
+## Add annotation
+```{r annotations, eval = FALSE}
+world_points<- st_centroid(zebra_sf)
+world_points <- cbind(zebra_sf, st_coordinates(st_centroid(zebra_sf$geometry)))
+
+# zebra_point <- st_centroid(zebra_sf[1,])
+# zebra_point <- cbind(zebra_point, st_coordinates(st_centroid(zebra_point$geometry)))
+
+ggplot() + 
+  geom_sf(data = zebra_sf) +
+  geom_text(data = zebra_point, aes(x = X, y = Y, label = ID),
+            color = "yellow", fontface = "bold")
+
+# q2 <- q1 +
+#   geom_text(data = zebra_point, aes(x = X, y = Y, label = ID),
+#             color = "darkblue", fontface = "bold", check_overlap = FALSE)
+# q2
+```
+
