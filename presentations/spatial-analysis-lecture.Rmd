@@ -24,6 +24,7 @@ library("rnaturalearthdata")
 library("rgeos")
 library("ggmap")
 library("ggspatial")
+library("raster")
 # scrape html data
 ```
 
@@ -394,39 +395,40 @@ ggplot(zebra_sf) +
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 
 
-#Reading raster data
+## Reading raster data
 ```{r echo = FALSE, fig.align="center"}
 #Reading raster data into workspace
-raster("ndvi_mean_utm.tif")#From a file in your directory
-raster("ndvi_mean_utm.tif")#Other method
-raster("ndvi_mean_utm.tif")#Yet another method
+raster(here("data", "ndvi_mean_utm.tif"))#From a file in your directory
+raster(here("data", "ndvi_mean_utm.tif"))#Other method
+raster(here("data", "ndvi_mean_utm.tif"))#Yet another method
 ```
 
-#Converting projection
+## Converting projection
 ```{r echo = FALSE, fig.align="center"}
 #Some manipulation
 ```
 
 
-#Writing raster data
-```{r echo = FALSE, fig.align="center"}
-#Some manipulation
-```
-#Extracting data
+## Writing raster data
 ```{r echo = FALSE, fig.align="center"}
 #Some manipulation
 ```
 
-#EXERCISES
-#1. Load the NDVI raster file and plot. Overlay Zebra location 
-#2. Extract NDVI at zebra locations
-#3. Plot zebra location data. Color points according to NDVI values
+## Extracting data
+```{r echo = FALSE, fig.align="center"}
+#Some manipulation
+```
+
+## EXERCISES
+1. Load the NDVI raster file and plot. Overlay Zebra location 
+2. Extract NDVI at zebra locations
+3. Plot zebra location data. Color points according to NDVI values
 
 
-#Exercise 1
+## Exercise 1
 ```{r echo = FALSE, fig.align="center"}
 #Step 1: Get raster (.tiff) file into workspace
-NDVI_mean <- raster("ndvi_mean_utm.tif") * 0.0001
+NDVI_mean <- raster(here("data", "ndvi_mean_utm.tif")) * 0.0001
 NDVI_mean
 
 #Step 2: Plot raster and zebra location data
@@ -438,7 +440,7 @@ NDVI_mean %>%
 ```
 
 
-#Exercise 2
+## Exercise 2
 ```{r echo = FALSE, fig.align="center"}
 #Step 3: Extract NDVI a locations
 zebra_sf$NDVI_mean <- raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
@@ -459,11 +461,7 @@ ggplot(zebra_sf) +
 #####Acknowledge existance of multidimenional data and packages. netCDF files
 
 
-# PART III: MAKING NICE MAPS
-
-## Basics
-- Making maps with `sf` and `ggplot2`
-- interfaces with `ggplot2` using `geom_sf`
+# PART III: ADDING BASE MAPS
 
 ## Adding basemaps!
 - Focus on `ggmap`
@@ -504,8 +502,7 @@ names(zebra_bbox) <- c("left", "bottom", "right", "top")
 terr_basemap <- get_stamenmap(bbox=zebra_bbox, zoom=9, maptype="terrain")
 
 ggmap(terr_basemap) +
-  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
-  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=roads, inherit.aes = FALSE) + 
   geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
   coord_sf(crs = st_crs(4326))
 ```
@@ -515,8 +512,7 @@ ggmap(terr_basemap) +
 wat_basemap <- get_stamenmap(bbox=zebra_bbox, zoom=9, maptype="watercolor")
 
 ggmap(wat_basemap) +
-  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
-  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=roads, inherit.aes = FALSE) + 
   geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
   coord_sf(crs = st_crs(4326))
 ```
@@ -535,8 +531,7 @@ names(zebra_center) <- c("lon", "lat")
 sat_basemap <- get_googlemap(center=zebra_center, zoom=8, size=c(640, 640), scale=2,
                              maptype="satellite")
 ggmap(sat_basemap) +
-  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
-  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=roads, inherit.aes = FALSE) + 
   geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
   coord_sf(crs = st_crs(4326))
 ```
@@ -551,16 +546,19 @@ To manually set different plotting limits, pass in an empty "base layer" and set
 ```{r Google sat manual limits, echo=TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 ggmap(sat_basemap, maprange=FALSE, base_layer=ggplot(aes(x=1, y=1), data=NULL)) +
   xlim(14.3, 17.4) + ylim(-20, -18) + xlab("lon") + ylab("lat") +
-  geom_sf(data=large_roads, size=1.5, inherit.aes = FALSE) + 
-  geom_sf(data=small_roads, size=0.6, inherit.aes = FALSE) + 
+  geom_sf(data=roads, inherit.aes = FALSE) + 
   geom_sf(data=zebra_sf, aes(color=ID), inherit.aes = FALSE) +
   coord_sf(crs = st_crs(4326))
 ```
 
 ## Adding basemaps: alternative approaches
 - An alternative package is `RgoogleMaps`
-- No need to get Google API key (yay!)
-- Does not seems to be compatible with `ggplot2` (boo)
+  - No need to get Google API key (yay!)
+  - Does not seems to be compatible with `ggplot2` (boo)
+
+- Another approach is to download raster data directly from [Natural Earth](https://www.naturalearthdata.com/downloads/)
+  - Have to download manually from website and import `tif` file as a raster *brick*, then display red/green/blue values
+  - Only works well if you are mapping a large spatial extent (lacks fine resolution)
 
 
 # PART IV: Making it pretty for publication
