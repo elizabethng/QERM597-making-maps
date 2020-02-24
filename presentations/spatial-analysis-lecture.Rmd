@@ -4,11 +4,12 @@ subtitle: "QERM 597 Winter 2020"
 author: "Elizabeth Ng, Brielle Kwarta, Michele Buonanduci, and Harry Podschwit "
 date: " `r Sys.Date()`"
 output:
-  ioslides_presentation:
+  ioslides_presentation: 
     smaller: true
   powerpoint_presentation: default
   html_document: default
   slidy_presentation: default
+
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +26,15 @@ library("rgeos")
 library("ggmap")
 library("ggspatial")
 library("raster")
+library("ggplot2")
+library("plotly")
+library("dplyr")
 # scrape html data
+
+#Uncomment here if using rnatural earth for the first time: 
+#devtools::install_github("ropenscilabs/rnaturalearthdata", force = TRUE)
+#install.packages("rnaturalearthhires", repos = "http://packages.ropensci.org")
+
 ```
 
 
@@ -179,14 +188,8 @@ EN: Do we need this content or does it arise pretty natually from our questions 
 methods(class = "sf")
 ```
 
-
-# PART I: PLOTTING POINT AND SHAPEFILE DATA
----
-```{r}
-Namibia <- st_read(here("data", "NAM-level_1.shp"))
-class(Namibia)
-head(Namibia)
-
+## Reading shapefiles
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
 roads <- st_read(here("data", "enproads.shp"))
 class(roads)
 head(roads)
@@ -199,106 +202,124 @@ head(roads)
 ```
 
 ---
-```{r echo = TRUE}
-st_geometry(Namibia) %>% plot 
 
-plot(st_geometry(roads))
-```
-
----
-```{r echo = TRUE}
+```{r echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 # Default methods for objects
-plot(Namibia)
-plot(Namibia[,3])
-
 plot(roads)
-plot(roads[,1])
 ```
 
 ---
-```{r echo = TRUE}
+```{r echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 plot(filter(roads[,3], KM > 20))
-```
-
-# Reading and writing data
-
-## Reading shapefiles
-
-```{r echo = TRUE}
-fileloc <- system.file("shape/nc.shp", package = "sf")
-nc <- read_sf(fileloc)
-```
-
-* st_crs() used to convert coordinates (do projections) and do datum transformations
-* Proj.4 string or ESPG code contains this info
-* [Web](https://spatialreference.org/) [repositories](https://georepository.com/home.html) for ESPG and Proj.4 information
-
----
-```{r echo = TRUE}
-st_crs("+proj=longlat +datum=WGS84") # Proj.4 string"
-st_crs(3857)                         # ESPG code: public registry of spatial reference systems, 3857 = web-based mapping (i.e. Google                                         maps, OpenStreetMap)
-st_crs(3857)$units                   # check units
-st_crs(NA)                           # unknown (assumed planar/Cartesian)
-```
-
----
-* `st_transform` transforms or converts coordinates to [new reference system](https://edzer.github.io/UseR2017/)
-```{r echo = TRUE}
-(a1 <- st_area(nc[1,])) # area, using geosphere::areaPolygon
-(a2 <- st_area(st_transform(nc[1, ], 32119))) # NC state plane, m
-(a3 <- st_area(st_transform(nc[1,], 2264)))   # NC state plane, US foot
-```
-
----
-```{r echo = TRUE}
-units::set_units(a1, km^2)
-units::set_units(a2, km^2)
-units::set_units(a3, km^2)
 ```
 
 
 ## Other data sources
-> * Convert from other `Spatial*` objects using `st_as_sf`
-> * Convert long/lat data
 > * Packages such as `rnaturalearth`
-
-## Convert long/lat data
-```{r warning = FALSE}
-# Scrape some lat/lon data (see example at https://ryanpeek.github.io/2017-08-03-converting-XY-data-with-sf-package/)
-url <- "http://www.hotspringsdirectory.com/usa/ca/gps-usa-ca.html"
-df <- htmltab(url, which = 1, header = 1,
-              colNames = c("STATE","LAT","LONG","SpringName","Temp_F", "Temp_C", "AREA", "USGS_quad"))
-hotsprings_df <- df %>%
-  as_tibble() %>%
-  mutate(LAT = as.numeric(LAT),
-         LONG = as.numeric(LONG),
-         Temp_F = as.numeric(Temp_F),
-         Temp_C = as.numeric(Temp_C),
-         LONG = -LONG) %>%
-  na.omit()
-```
-
-```{r, echo = TRUE}
-head(hotsprings_df)
-```
-
-## Convert long/lat data
-* Assume that these data are WGS84 (`crs = 4326`)
-* WGS84: World Geodic System 1984
-* 4326=coordinate system based on Earth's center of mass
-```{r, echo = TRUE}
-hotsprings <- st_as_sf(hotsprings_df,
-                       coords = c("LONG", "LAT"),
-                       crs = 4326)
-head(hotsprings)
-```
+> * Convert from other `Spatial*` objects using `st_as_sf`
 
 
 ## Data from packages
-```{r, echo = TRUE}
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 world <- ne_countries(scale = "medium", returnclass = "sf")
 st_geometry(world) %>% plot()
 ```
+
+## Namibia
+Default data is Lat/Long
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+Namibia <- ne_countries(country = "namibia")
+Namibia_sf <- st_as_sf(Namibia)
+
+plot(Namibia_sf)
+
+```
+* Exercise: try for another country
+
+## Want more from the natural earth package? 
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=2.5}
+#Uncomment here if using rnatural earth for the first time: 
+#devtools::install_github("ropenscilabs/rnaturalearthdata", force = TRUE)
+#install.packages("rnaturalearthhires", repos = "http://packages.ropensci.org")
+
+namibia_political <- ne_states(country = "namibia")
+namibia_political_sf <- st_as_sf(namibia_political)
+plot(namibia_political_sf)
+```
+
+## Coordinates
+* st_crs() used to convert coordinates (do projections) and do datum transformations
+* Proj.4 string or ESPG code contains this info
+* ESPG code: public registry of spatial reference systems
+* [Web](https://spatialreference.org/) [repositories](https://georepository.com/home.html) for ESPG and Proj.4 information
+* ESPG codes identify coordinate reference systems (CRS)
+  - Ex: CRS= 3857 (web-based mapping i.e. Google, OpenStreetMap)
+* Lat/Long data: 
+  - Often expressed as WGS84: World Geodic System 1984
+  - Ex: CRS= 4326 (coordinate system based on Earth's center of mass)
+* ESPG = European Petroleum Survey Group
+
+  
+---
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+st_crs("+proj=longlat +datum=WGS84") # Proj.4 string"
+st_crs(3857)                         # ESPG = 3857
+st_crs(3857)$units                   # check units
+st_crs(4326)
+st_crs(4326)$units
+st_crs(NA)                          # unknown (assumed planar/Cartesian)
+
+```
+
+---
+##Area
+* `st_transform` transforms or converts coordinates to [new reference system](https://edzer.github.io/UseR2017/)
+```{r, echo = TRUE}
+(a1 <- st_area(Namibia_sf))
+(a2 <- st_area(st_transform(Namibia_sf, 32733))) # Namibia plane m (UTM)
+(a3 <- st_area(st_transform(Namibia_sf, 4293))) # Another reference from espg.io 
+(a4 <- st_area(st_transform(Namibia_sf, 4326)))
+# Namibia projection = 4326
+```
+*If you are working with U.S. data you can convert to U.S. feet
+
+
+---
+Change the units!
+```{r echo = TRUE}
+units::set_units(a1, km^2)
+units::set_units(a1, ft^2)
+```
+
+
+
+## From csv to an sf object
+```{r, echo = TRUE}
+zebra_data <- read.csv(here("data", "zebra.csv"))
+head(zebra_data)
+```
+
+
+## Converting the object
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+zebra_sf <- read.csv(here("data", "Zebra.csv")) %>% 
+  dplyr::select(ID = Name, 4:6) %>% 
+  mutate(timestamp = as.POSIXct(lubridate::mdy_hm(Date))) %>%
+  st_as_sf(., coords = 3:4, crs = "+init=epsg:4326") 
+
+st_transform(zebra_sf, 32733) #convert to UTM
+
+```
+
+## Extra thing that blew my mind! Interactive Maps in R?
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+countries <- ne_countries(scale=110)
+p <- ggplot() +  geom_polygon(data=countries, aes(x=long, y=lat, group=group),  color="white", lwd = .25)
+ 
+ggplotly(p)
+```
+
 
 ## Writing data
 * shapefiles
@@ -310,18 +331,21 @@ st_geometry(world) %>% plot()
 2. If we look at our roads data, we see that there are several types of roads in the shapefile. How close or far from different road types do zebra move? 
 
 ## Exercise 1
-```{r, echo = TRUE}
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 roads <- st_read(here("data", "enproads.shp"), crs = "+init=epsg:4326") %>% #4326= coordinate system based on Earth's center of mass
-  st_transform("+init=epsg:32733") #32733 = spatial reference for Nambia 
+  st_transform(32733) #32733 = spatial reference for Nambia 
 
 st_geometry(roads) %>% plot
 
+```
 
+## Exercise 1
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=2.5}
 zebra_sf <- read.csv(here("data", "Zebra.csv")) %>% 
   dplyr::select(ID = Name, 4:6) %>% 
   mutate(timestamp = as.POSIXct(lubridate::mdy_hm(Date))) %>%
   st_as_sf(., coords = 3:4, crs = "+init=epsg:4326") %>% #longlat, converting foreign object to SF object
-  st_transform("+init=epsg:32733") #convert to UTM
+  st_transform(32733) #convert to UTM
 
 ggplot() +
   geom_sf(data=roads) +
@@ -331,7 +355,7 @@ ggplot() +
 
 ## Exercise 2
 How close or far from different road types do zebra move? 
-```{r, echo = TRUE}
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=1.5}
 unique(roads$TYPE)
 
 #Filter roads based off type:
@@ -343,7 +367,10 @@ ggplot() +
   geom_sf(data=small_roads, size=0.6) + 
   geom_sf(data=zebra_sf, aes(color=ID))
 
+```
 
+## Exercise 2: 
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=2.5}
 # Find the minimum distance (in meters) of each point to a large road
 large_dist<- st_distance(y=zebra_sf, x=large_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
 zebra_sf$large_road_dist <- apply(large_dist, 2, min)
@@ -354,12 +381,17 @@ zebra_sf$small_road_dist <- apply(small_dist, 2, min)
 
 head(data.frame(zebra_sf))
 
+```
+
+## Exercise 2: 
+```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 ggplot(zebra_sf) +
   geom_histogram(aes(large_road_dist, fill="large roads"), alpha=0.5) +
   geom_histogram(aes(small_road_dist, fill="small roads"), alpha=0.5) +
   scale_fill_manual(labels=c("large roads", "small roads"), values=c("blue", "orange"))
-
 ```
+
+
 
 # PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
