@@ -15,20 +15,18 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, collapse = TRUE)
 
-library("rnaturalearth")
 library("tidyverse")
 library("sf")
 library("here")
 library("htmltab")
 library("lwgeom")
-library("rnaturalearthdata")
 library("rgeos")
 library("ggmap")
 library("ggspatial")
 library("raster")
-library("ggplot2")
 library("plotly")
-library("dplyr")
+library("rnaturalearth")
+library("rnaturalearthdata")
 # scrape html data
 
 #Uncomment here if using rnatural earth for the first time: 
@@ -238,9 +236,9 @@ plot(Namibia_sf)
 
 ## Want more from the natural earth package? 
 ```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=2.5}
-#Uncomment here if using rnatural earth for the first time: 
-#devtools::install_github("ropenscilabs/rnaturalearthdata", force = TRUE)
-#install.packages("rnaturalearthhires", repos = "http://packages.ropensci.org")
+#Uncomment here if using rnatural earth for the first time:
+# devtools::install_github("ropenscilabs/rnaturalearthhires", force = TRUE)
+# install.packages("rnaturalearthhires", repos = "http://packages.ropensci.org")
 
 namibia_political <- ne_states(country = "namibia")
 namibia_political_sf <- st_as_sf(namibia_political)
@@ -463,10 +461,10 @@ ggplot(zebra_sf) +
 #####Acknowledge existance of multidimenional data and packages. netCDF files
 
 
-# PART III: ADDING BASE MAPS
+# PART III: ADDING BASEMAPS
 
 ## Adding basemaps!
-- Focus on `ggmap`
+Focus on `ggmap`
 - As of mid-2018, requires registering with Google and obtaining an API key
 - Requires providing a valid credit card (yikes!), though charges are nonexistent or at least very minimal
 - See the `ggmap` [GitHub page](https://github.com/dkahle/ggmap) for more information about API keys
@@ -561,6 +559,21 @@ ggmap(sat_basemap, maprange=FALSE, base_layer=ggplot(aes(x=1, y=1), data=NULL)) 
 - Another approach is to download raster data directly from [Natural Earth](https://www.naturalearthdata.com/downloads/)
     - Have to download manually from website and import `tif` file as a raster *brick*, then display red/green/blue values
     - Only works well if you are mapping a large spatial extent (lacks fine resolution)
+
+## Exercises
+1. Adjust the *zoom* level in any of the previous code examples
+    - *zoom* = integer from 3-21
+    - 3 = continent, 10 = city, 21 = building
+2. Try using the `geocode` function to find the lat/lon coordinates for a known location
+    - e.g., `geocode("Space Needle")`
+
+## Exercises
+```{r Google geocode, echo=TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
+my_basemap <- get_googlemap(center="Space Needle", zoom=14, size=c(640, 640),
+                            scale=2, maptype="satellite")
+
+ggmap(my_basemap)
+```
 
 
 # PART IV: Making it pretty for publication
