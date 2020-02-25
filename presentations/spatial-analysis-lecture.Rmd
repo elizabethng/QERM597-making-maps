@@ -27,6 +27,9 @@ library("raster")
 library("plotly")
 library("rnaturalearth")
 library("rnaturalearthdata")
+library("sp")
+library("knitr")
+
 # scrape html data
 
 #Uncomment here if using rnatural earth for the first time: 
@@ -391,74 +394,141 @@ ggplot(zebra_sf) +
 
 
 
+
+
 # PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
 
+#Pre-requisite code that audience doesn't need to see
+load("WIND_SPEED_MATRIX.RData")
+load("WSPD_COORDS.RData")
+x.min<-coords[[1]]-360
+y.min<-coords[[2]]
+x.max<-coords[[3]]-360
+y.max<-coords[[4]]
 
-## Reading raster data
-```{r echo = FALSE, fig.align="center"}
-#Reading raster data into workspace
-raster(here("data", "ndvi_mean_utm.tif"))#From a file in your directory
-raster(here("data", "ndvi_mean_utm.tif"))#Other method
-raster(here("data", "ndvi_mean_utm.tif"))#Yet another method
 ```
 
-## Converting projection
-```{r echo = FALSE, fig.align="center"}
-#Some manipulation
+## Loading raster into workspace (matrix)
+Assume you have an existing 'matrix' object in your workspace that you want to cast as a 'raster' object.
+```{r,echo=TRUE}
+
+wspd.raster<-raster(wspd,xmn=x.min,ymn=y.min,xmx=x.max,ymx=y.max)
+
+class(wspd)
+class(wspd.raster)
 ```
 
 
-## Writing raster data
-```{r echo = FALSE, fig.align="center"}
-#Some manipulation
+##A simple raster map
+
+```{r,echo=TRUE}
+plot(wspd.raster)
 ```
 
-## Extracting data
-```{r echo = FALSE, fig.align="center"}
-#Some manipulation
-```
+## Exercise 1: Loading a raster (.tiff)
+You should have a file labeled "ndvi_mean_utm.tif" in your working directory. Use ?raster and upload the raster into your workspace. Plot a simple raster map. 
 
-## EXERCISES
-1. Load the NDVI raster file and plot. Overlay Zebra location 
-2. Extract NDVI at zebra locations
-3. Plot zebra location data. Color points according to NDVI values
-
-
-## Exercise 1
-```{r echo = FALSE, fig.align="center"}
-#Step 1: Get raster (.tiff) file into workspace
-NDVI_mean <- raster(here("data", "ndvi_mean_utm.tif")) * 0.0001
+## Exercise 1: Loading a raster (.tiff)
+Solution:
+```{r,echo=TRUE}
+NDVI_mean <- raster("ndvi_mean_utm.tif")
 NDVI_mean
+```
 
-#Step 2: Plot raster and zebra location data
-NDVI_mean %>% 
-  rasterToPoints() %>%
-  data.frame() %>%
-  ggplot() + geom_raster(aes(x=x, y=y, fill=ndvi_mean_utm)) +
+
+## Exercise 1: Loading a raster (.tiff)
+Solution:
+```{r,echo=TRUE}
+plot(NDVI_mean)
+```
+
+##Raster maps with ggplot
+```{r,echo=TRUE,tidy=TRUE}
+  ggplot(data.frame(rasterToPoints(wspd.raster))) +
+  geom_raster(aes(x=x, y=y,fill=layer))
+```
+
+##Exercise 2: Plotting raster maps with ggplot
+Take the raster object and plot it in ggplot. Can you overlay the zebra location data from earlier? (EC) Can you write equivalent code using the pipe (i.e. %>%) functionality?
+
+##Exercise 2: Plotting raster maps with ggplot
+Solution: (no piping)
+
+```{r,echo=TRUE}
+  ggplot(data.frame(rasterToPoints(NDVI_mean))) +
+  geom_raster(aes(x=x, y=y,fill=ndvi_mean_utm)) +
   geom_sf(data=zebra_sf, size=0.7,col="black")
 ```
 
+##Exercise 2: Plotting raster maps with ggplot
+Solution: (piping)
 
-## Exercise 2
-```{r echo = FALSE, fig.align="center"}
-#Step 3: Extract NDVI a locations
-zebra_sf$NDVI_mean <- raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
+```{r,eval=FALSE, echo=TRUE}
+  NDVI_mean %>% rasterToPoints() %>% data.frame()  %>% ggplot()
+```
+Solution: (no piping)
 
+```{r,eval=FALSE,echo=TRUE}
+ggplot(data.frame(rasterToPoints(NDVI_mean)))
+```
+
+
+## Extracting raster data at locations
+
+```{r cars, echo = TRUE}
+pop_sf <- read_csv("huc_whp_burnable_area_population.csv") %>% 
+  st_as_sf(., coords = 6:5, crs = "+init=epsg:4326") 
+pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
+```
+
+## Extracting raster data at locations
+```{r,echo=FALSE}
+summary(pop_sf$wspd,breaks=10)
+```
+
+##Exercise 3: Point extraction from rasters
+Modify this code to extract NDVI information at the Zebra locations. Calculate summary statistics.
+```{r, eval=FALSE}
+pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
+```
+
+
+##Exercise 3: Point extraction from rasters
+Solution:
+```{r, echo=TRUE}
+  zebra_sf$ndvi<-raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
+  summary(zebra_sf$ndvi)
+```
+
+##Multidimensional data analysis
+
+```{r,eval=FALSE,echo=TRUE}
+slice<-raster(ncol=20,nrow=20)
+slice[]<-rnorm(n=ncell(slice))
+sim_stack <- stack(slice,slice^2,1/slice)
+
+dates<-c(1:3)
+#assign time value (in this case year) to each layer
+sim_stack <- setZ(sim_stack, dates)
+
+#time match and extract
+stack_dates <- getZ(sim_stack) #all raster layer dates
+zebra_sf$NDVI <- NA
+for (i in 1:50) { #this would take a long time to run through nrow(zebra_sf) locations, so demonstrating for first 50 locations
+  print(paste0("extracting zebra location #",i))
+  zeb_date <- as.Date(zebra_sf$timestamp[i]) 
+  stack_idx <- which(stack_dates %in% seq(zeb_date - 15, zeb_date, by='day')) ##which raster layer date matches zebra date
+  zebra_sf$NDVI[i] <-raster::extract(NDVI_stack[[stack_idx]], #as(zebra_sf$geometry[i], "Spatial")) #extract
+}
 head(data.frame(zebra_sf))
-```
-
-```{r echo = FALSE, fig.align="center"}
-#Step 4: Plot locations colored by NDVI
-ggplot(zebra_sf) +
-  geom_sf(aes(color=NDVI_mean)) + 
-  scale_color_gradientn(colors=rev(terrain.colors(10))) +
-  theme_bw()
 
 ```
 
-
-#####Acknowledge existance of multidimenional data and packages. netCDF files
+##Multidimensional data analysis
+Using netCDF files (ncdf4 package in R) are my preferred approach. 
 
 
 # PART III: ADDING BASEMAPS
