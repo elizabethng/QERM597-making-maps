@@ -400,7 +400,7 @@ ggplot(zebra_sf) +
 # PART II: Plotting raster data and extracting information
 
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
-```{r setup, include=FALSE}
+```{r setup_partII, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
 #Pre-requisite code that audience doesn't need to see
@@ -460,7 +460,7 @@ Take the raster object and plot it in ggplot. Can you overlay the zebra location
 Solution: (no piping)
 
 ```{r,echo=TRUE}
-  ggplot(data.frame(rasterToPoints(NDVI_mean))) +
+ggplot(data.frame(rasterToPoints(NDVI_mean))) +
   geom_raster(aes(x=x, y=y,fill=ndvi_mean_utm)) +
   geom_sf(data=zebra_sf, size=0.7,col="black")
 ```
@@ -469,7 +469,7 @@ Solution: (no piping)
 Solution: (piping)
 
 ```{r,eval=FALSE, echo=TRUE}
-  NDVI_mean %>% rasterToPoints() %>% data.frame()  %>% ggplot()
+NDVI_mean %>% rasterToPoints() %>% data.frame()  %>% ggplot()
 ```
 Solution: (no piping)
 
@@ -501,8 +501,8 @@ pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
 ## Exercise 3: Point extraction from rasters
 Solution:
 ```{r, echo=TRUE}
-  zebra_sf$ndvi<-raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
-  summary(zebra_sf$ndvi)
+zebra_sf$ndvi<-raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
+summary(zebra_sf$ndvi)
 ```
 
 ## Multidimensional data analysis
@@ -657,75 +657,106 @@ ggmap(my_basemap)
 - Inset maps
 
 
-## Natural earth package to access other data
+## Original plot
 ```{r}
-# Natural earth 1 with shaded relief and drainages
-# address <- "https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/raster/NE1_HR_LC_SR_W_DR.zip"
-# utils::download.file(file.path(address), zip_file <- tempfile(), method = "libcurl")
-# options("download.file.method" = "libcurl")
-# countries10 <- ne_download(scale = 10, type = 'countries', category = 'cultural', returnclass = "sf")
-# ne_basemap <- ne_download(scale = "large", 
-#                           type = "NE1_HR_LC_SR_W_DR", 
-#                           category = "raster", 
-#                           returnclass = "sf")
-
-ne_namibia <- ne_countries(scale = "medium", country = "namibia", returnclass = "sf")
-ne_africa <- ne_countries(scale = "medium", continent = "africa", returnclass = "sf")
-ne_feature <- ne_download(scale = 10, category = "physical", type = "rivers_lake_centerlines", returnclass = "sf") 
-africa_rivers <- st_intersection(ne_feature, ne_africa)
-
 ggplot() + 
-  geom_sf(data = ne_africa) + 
-  geom_sf(data = ne_namibia, fill = "grey") +
-  geom_sf(data = africa_rivers, color = "blue")
-```
-
-
-## Fix the legend
-```{r}
-q <- ggplot() +
   geom_sf(data = large_roads, size = 1.5, color = "grey", inherit.aes = FALSE) + 
   geom_sf(data = small_roads, size = 0.6, color = "grey", inherit.aes = FALSE) + 
-  geom_sf(data = zebra_sf, aes(color = ID), alpha = 0.1, inherit.aes = FALSE, show.legend = "point") +
-  scale_color_manual(values = viridis::magma(length(unique(zebra_sf$ID)))) +
-  theme(legend.key = element_rect(fill = NA)) + # remove background of legend keys
-  guides(color = guide_legend(override.aes = list(alpha = 1))) # make the legend keys 100% opaque
-q
-
+  geom_sf(data = zebra_sf, aes(color = ID))
 ```
 
 
-
-
+## Fix overplotting and make legend keys points
 ```{r new-colors}
-# ggmap(sat_basemap) +
-q0 <- ggplot() +
+(q0 <- ggplot() +
   geom_sf(data = large_roads, size = 1.5, color = "grey", inherit.aes = FALSE) + 
   geom_sf(data = small_roads, size = 0.6, color = "grey", inherit.aes = FALSE) + 
-  geom_sf(data = zebra_sf, aes(color = large_road_dist/1000), alpha = 0.1, inherit.aes = FALSE) +
-  scale_color_viridis_c(
-    name = "Distance from \n large road (km)",
-    direction = -1,
-    option = "cividis") +
-  # coord_sf(crs = st_crs(4326)) +
-  labs(x = "Longitude", y = "Lattitude") +
-  theme_bw() +
-  theme(panel.grid.major = element_line(color = "white"))
-q0
+  geom_sf(data = zebra_sf, aes(color = ID), inherit.aes = FALSE, 
+          alpha = 0.1,               # fix over plotting
+          show.legend = "point")     # make legend keys points instead of rects.
+)
 ```
+
+## Refine plot
+```{r}
+(q1 <- q0 +
+  coord_sf(ylim = c(-20, -18.5), crs = st_crs(4326)) + # make space for legend
+  scale_color_manual(
+    values = viridis::viridis(10), # pick new color scale
+    name = "Zebra ID",             # change title of legend
+    guide = guide_legend(
+      direction = "horizontal", # horizontal legend
+      title.position = "top",   # title at top
+      title.hjust = 0.5,        # center title
+      byrow = TRUE,             # organize legend keys
+      nrow = 3,                 # organize legend keys
+      override.aes = list(alpha = 1) # make the legend keys 100% opaque
+    )) +
+  theme_bw() +
+  theme(legend.position = c(0.78, 0.15),       # position legend in lower right corner
+        legend.key = element_rect(fill = NA),  # remove background of legend keys
+        panel.grid.major = element_line(color = "white")) + # remove graticules but leave coordinates
+  labs(x = "Longitude", y = "Lattitude")
+)
+```
+
 
 ## Add scale bar and north arrow
 ```{r north-arrow}
-library("ggspatial")
-
-q1 <- q0 +
-  coord_sf(ylim = c(-20, -18), crs = st_crs(4326)) +
+(q2 <- q1 +
     annotation_scale(location = "bl", width_hint = 0.5) +
     annotation_north_arrow(location = "bl", which_north = "true", 
         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
         style = north_arrow_fancy_orienteering)
-q1
+)
 ```
+
+
+## Add inset map for context
+Natural earth package to access other data
+```{r}
+ne_namibia <- ne_countries(scale = "medium", country = "namibia", returnclass = "sf")
+ne_africa <- ne_countries(scale = "medium", continent = "africa", returnclass = "sf")
+ne_feature <- ne_download(scale = 10, category = "physical", type = "rivers_lake_centerlines", returnclass = "sf") 
+africa_rivers <- st_intersection(ne_feature, ne_africa)
+```
+
+## Natural earth package to access other data
+Create a base map with some information
+```{r}
+b0 <- ggplot(data = ne_africa) +  # need to put data in ggplot call for geom_rect to work
+  geom_sf(fill = "gray93", color = "gray93") + 
+  geom_sf(data = ne_namibia, fill = "gray78", color = "gray93") +
+  geom_sf(data = africa_rivers, color = "lightskyblue") +
+  theme_bw() +
+  coord_sf(xlim = c(-35, 51),       
+           ylim = c(-46.96, 37.34),  # make additional space for inset map
+           datum = NA)               # remove graticules and coords
+b0
+```
+
+## Add a reference box
+```{r}
+b1 <- b0 +
+  geom_rect(xmin = 14, xmax = 19, ymin = -21, ymax = -17, 
+            fill = NA, colour = "black", size = 1.5)
+b1
+```
+
+
+# Add a nested map
+```{r}
+b1 +
+  annotation_custom(
+    grob = ggplotGrob(q2),
+    xmin = -34,
+    xmax = 10,
+    ymin = -46,
+    ymax = -10
+  )
+```
+
+
 
 ## Add annotation
 ```{r annotations, eval = FALSE}
@@ -744,6 +775,13 @@ ggplot() +
 #   geom_text(data = zebra_point, aes(x = X, y = Y, label = ID),
 #             color = "darkblue", fontface = "bold", check_overlap = FALSE)
 # q2
+```
+
+# Plot NVDI (vegetation)
+```{r}
+# ggplot(data.frame(rasterToPoints(NDVI_mean))) +
+#   geom_raster(aes(x=x, y=y,fill=ndvi_mean_utm)) +
+#   geom_sf(data=zebra_sf, size=0.7,col="black")
 ```
 
 
