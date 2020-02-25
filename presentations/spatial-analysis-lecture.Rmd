@@ -316,6 +316,7 @@ st_transform(zebra_sf, 32733) #convert to UTM
 
 ```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 countries <- ne_countries(scale=110)
+
 p <- ggplot() +  geom_polygon(data=countries, aes(x=long, y=lat, group=group),  color="white", lwd = .25)
  
 ggplotly(p)
