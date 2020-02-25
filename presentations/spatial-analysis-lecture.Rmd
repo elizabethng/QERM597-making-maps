@@ -171,12 +171,12 @@ EN: Do we need this content or does it arise pretty natually from our questions 
 
 ## Working with `sf` objects
 * `sf` (simple feature) objects are extended `data.frame`s or `tibble`s
-  - attribute data stored as `tibble`
-  - geometry stored as a list column
-  - can have multiple types of geometry in one object
+    - attribute data stored as `tibble`
+    - geometry stored as a list column
+    - can have multiple types of geometry in one object
 * class is `sfc` (simple feature columns) with useful components like
-  * bounding box `bbox` 
-  * `CRS` (coordinate reference system) attributes
+    - bounding box `bbox` 
+    - `CRS` (coordinate reference system) attributes
 
 
 ## `sf` and `tidyverse`
@@ -254,10 +254,10 @@ plot(namibia_political_sf)
 * ESPG code: public registry of spatial reference systems
 * [Web](https://spatialreference.org/) [repositories](https://georepository.com/home.html) for ESPG and Proj.4 information
 * ESPG codes identify coordinate reference systems (CRS)
-  - Ex: CRS= 3857 (web-based mapping i.e. Google, OpenStreetMap)
+    - Ex: CRS= 3857 (web-based mapping i.e. Google, OpenStreetMap)
 * Lat/Long data: 
-  - Often expressed as WGS84: World Geodic System 1984
-  - Ex: CRS= 4326 (coordinate system based on Earth's center of mass)
+    - Often expressed as WGS84: World Geodic System 1984
+    - Ex: CRS = 4326 (coordinate system based on Earth's center of mass)
 * ESPG = European Petroleum Survey Group
 
   
@@ -371,7 +371,7 @@ ggplot() +
 
 ```
 
-## Exercise 2: 
+## Exercise 2 
 ```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=2.5}
 # Find the minimum distance (in meters) of each point to a large road
 large_dist<- st_distance(y=zebra_sf, x=large_roads) # a units matrix dim =[nrow(x), nrow(y)]; takes 10-20 seconds
@@ -385,7 +385,7 @@ head(data.frame(zebra_sf))
 
 ```
 
-## Exercise 2: 
+## Exercise 2 
 ```{r, echo = TRUE, warning=FALSE, message=FALSE, fig.height=3.5}
 ggplot(zebra_sf) +
   geom_histogram(aes(large_road_dist, fill="large roads"), alpha=0.5) +
@@ -397,14 +397,15 @@ ggplot(zebra_sf) +
 
 
 
-# PART II: PLOTTING RASTER DATA AND EXTRACTING INFORMATION
+# PART II: Plotting raster data and extracting information
+
 # DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
 #Pre-requisite code that audience doesn't need to see
-load("WIND_SPEED_MATRIX.RData")
-load("WSPD_COORDS.RData")
+load(here("data", "WIND_SPEED_MATRIX.RData"))
+load(here("data", "WSPD_COORDS.RData"))
 x.min<-coords[[1]]-360
 y.min<-coords[[2]]
 x.max<-coords[[3]]-360
@@ -423,7 +424,7 @@ class(wspd.raster)
 ```
 
 
-##A simple raster map
+## A simple raster map
 
 ```{r,echo=TRUE}
 plot(wspd.raster)
@@ -435,7 +436,7 @@ You should have a file labeled "ndvi_mean_utm.tif" in your working directory. Us
 ## Exercise 1: Loading a raster (.tiff)
 Solution:
 ```{r,echo=TRUE}
-NDVI_mean <- raster("ndvi_mean_utm.tif")
+NDVI_mean <- raster(here("data", "ndvi_mean_utm.tif"))
 NDVI_mean
 ```
 
@@ -446,16 +447,16 @@ Solution:
 plot(NDVI_mean)
 ```
 
-##Raster maps with ggplot
+## Raster maps with ggplot
 ```{r,echo=TRUE,tidy=TRUE}
-  ggplot(data.frame(rasterToPoints(wspd.raster))) +
+ggplot(data.frame(rasterToPoints(wspd.raster))) +
   geom_raster(aes(x=x, y=y,fill=layer))
 ```
 
-##Exercise 2: Plotting raster maps with ggplot
+## Exercise 2: Plotting raster maps with ggplot
 Take the raster object and plot it in ggplot. Can you overlay the zebra location data from earlier? (EC) Can you write equivalent code using the pipe (i.e. %>%) functionality?
 
-##Exercise 2: Plotting raster maps with ggplot
+## Exercise 2: Plotting raster maps with ggplot
 Solution: (no piping)
 
 ```{r,echo=TRUE}
@@ -464,7 +465,7 @@ Solution: (no piping)
   geom_sf(data=zebra_sf, size=0.7,col="black")
 ```
 
-##Exercise 2: Plotting raster maps with ggplot
+## Exercise 2: Plotting raster maps with ggplot
 Solution: (piping)
 
 ```{r,eval=FALSE, echo=TRUE}
@@ -490,21 +491,21 @@ pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
 summary(pop_sf$wspd,breaks=10)
 ```
 
-##Exercise 3: Point extraction from rasters
+## Exercise 3: Point extraction from rasters
 Modify this code to extract NDVI information at the Zebra locations. Calculate summary statistics.
 ```{r, eval=FALSE}
 pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
 ```
 
 
-##Exercise 3: Point extraction from rasters
+## Exercise 3: Point extraction from rasters
 Solution:
 ```{r, echo=TRUE}
   zebra_sf$ndvi<-raster::extract(NDVI_mean, as(zebra_sf, "Spatial"))
   summary(zebra_sf$ndvi)
 ```
 
-##Multidimensional data analysis
+## Multidimensional data analysis
 
 ```{r,eval=FALSE,echo=TRUE}
 slice<-raster(ncol=20,nrow=20)
@@ -528,11 +529,11 @@ head(data.frame(zebra_sf))
 
 ```
 
-##Multidimensional data analysis
+## Multidimensional data analysis
 Using netCDF files (ncdf4 package in R) are my preferred approach. 
 
 
-# PART III: ADDING BASEMAPS
+# PART III: Adding basemaps
 
 ## Adding basemaps!
 Focus on `ggmap`
