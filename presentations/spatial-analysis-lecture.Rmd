@@ -197,8 +197,7 @@ st_crs(NA)                          # unknown (assumed planar/Cartesian)
 
 ```
 
----
-##Area
+## Area
 * `st_transform` transforms or converts coordinates to [new reference system](https://edzer.github.io/UseR2017/)
 ```{r, echo = TRUE}
 (a1 <- st_area(Namibia_sf))
@@ -209,8 +208,6 @@ st_crs(NA)                          # unknown (assumed planar/Cartesian)
 ```
 *If you are working with U.S. data you can convert to U.S. feet
 
-
----
 Change the units!
 ```{r echo = TRUE}
 units::set_units(a1, km^2)
