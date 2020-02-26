@@ -538,6 +538,7 @@ Using netCDF files (ncdf4 package in R) are my preferred approach.
 
 ## Adding basemaps!
 Focus on `ggmap`
+
 - As of mid-2018, requires registering with Google and obtaining an API key
 - Requires providing a valid credit card (yikes!), though charges are nonexistent or at least very minimal
 - See the `ggmap` [GitHub page](https://github.com/dkahle/ggmap) for more information about API keys
