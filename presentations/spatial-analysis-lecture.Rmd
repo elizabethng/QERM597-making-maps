@@ -754,15 +754,20 @@ n1
 # use st_bbox(zebra_sf)
 inset_ratio <- (-18.5 - (-20.5))/(17.5 - 14)
 
-cowplot::ggdraw(n1) +
+myfig <- cowplot::ggdraw(n1) +
   cowplot::draw_plot(q2, width = 1.2, height = 1.2*inset_ratio,
             x = 0.01, y = 0.1, hjust = 0, vjust = 0)
-
-ggsave(here("imgs", "namibia-zebra.png"), width = 10, height = 6)
 ```
 
+```{r echo = FALSE}
+ggsave(filename = here("imgs", "namibia-zebra.png"), 
+       plot = myfig,
+       width = 10, height = 6)
+```
+
+
 ## Add a nested map
-```{r echo = FALSE, fig.align = "center", out.width='70%', out.height='70%'}
+```{r echo = FALSE, fig.align = "center", out.width='90%', out.height='90%'}
 knitr::include_graphics(here("imgs", "namibia-zebra.png"))
 ```
 
