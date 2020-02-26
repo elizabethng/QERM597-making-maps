@@ -31,8 +31,6 @@ library("sp")
 library("knitr")
 library("cowplot")
 
-# scrape html data
-
 #Uncomment here if using rnatural earth for the first time: 
 #devtools::install_github("ropenscilabs/rnaturalearthdata", force = TRUE)
 #install.packages("rnaturalearthhires", repos = "http://packages.ropensci.org")
@@ -65,54 +63,12 @@ Variants of this question/workflow are applicable to other study systems.
 knitr::include_graphics(here("imgs", "arc-to-R-workflow.gif"))
 ```
 
-
-<!-- ## Reference systems -->
-<!-- ##* [Geodesic/geographic coordinates](https://edzer.github.io/rstudio_conf/#6) need -->
-<!-- ##  - Order (lat/long vs long/lat) -->
-<!-- ##  - Units (rad, arc_degree) -->
-<!-- ##  - Datum (aka reference ellipsoid) -->
-<!-- ##    <!-- * how are we describing the shape of the Earth? -->
-<!-- ##    <!-- * "best" approximation depends on region and scale -->
-<!-- ##    <!--   - what origin is used? -->
-<!-- ##    <!--   - tectonic plates move over time -->
-<!-- ##    <!--   - e.g., WGS84, is an approximate model of Earth at sea level updated in 2004 -->
-<!-- ##* [Cartesian/projected coordinates](https://www.axismaps.com/guide/general/map-projections/) need -->
-<!-- ##  - Units (km, m) -->
-<!-- ##  - Relationship to a datum/geodesic coordinates -->
-<!-- ##  - How to display 3D object in 2D -->
-<!-- ##  - Accurately display one of: area (Mercator), form (Azimuthal Equidistant), distance (Equirectangular) -->
-<!-- ##  <!-- - choice depends on what you're conveying, shape of the region -->
-<!-- ##  <!-- - e.g., use Tranverse Mercator for mapping long N-S region like Chile -->
-<!-- ##* Two separate issues: how do we model Earth (datum) and how do we display it on a flat surface (projection) -->
-
-
-<!-- ##<!-- ## Models of a round-ish Earth -->
-<!-- ##<!-- * There are different models of the Earth -->
-<!-- ##<!-- * Meaning of coordinates (lon/lat) depend on the geodetic datum -->
-<!-- ##<!-- * "_Geodetic datum_ is a coordinate reference system and a set of reference points used to locate places on Earth"[Wikipedia](https://en.m.wikipedia.org/wiki/Geodetic_datum) -->
-<!-- ##<!-- * "a datum is unlikely important when mapping continents, but it is when when drones try to deliver pizza" -[Edzer ##Pebesma]https://edzer.github.io/rstudio_conf/#6) -->
-<!-- ##<!-- * Depend on the scale (big or small matter more? where you are matters?) -->
-<!-- ##<!-- * On one hand, small areas are more easily modeled as a flat surface -->
-<!-- ##<!-- * But get your model wrong from continent to drone delivery matters -->
-<!-- ##<!-- * Model is described in a coordinate reference system (CRS) -->
-<!-- ##<!-- * Two types -->
-<!-- ##<!--   - geographic CRS (lon/lat) gives distance from the origin in degrees -->
-<!-- ##<!--   - projected CRS (easting/northing) gives distance from the origin in km -->
-<!-- ##<!-- - [ ] Datum?? -->
-<!-- ################################################################################################################## -->
-<!-- ##HP: In the interest of time, I propose that we limit our discussion of projections. All we really need to mention is that  -->
-<!-- ## there are a variety of geospatial models of the earth, and that it is critical that all your data are assuming the same model.  -->
-
-
 ## To answer our research question, we will need to:
 - Read and write spatial data
 - Represent geographic and attribute data
 - Transform between different models of Earth
 - Do geographic operations
 - Make maps
-EN: Do we need this content or does it arise pretty natually from our questions and then get explained by our demos?
-
-
 
 # Spatial analysis in R
 
@@ -136,39 +92,7 @@ EN: Do we need this content or does it arise pretty natually from our questions 
     * Can support processing very large files
 
 
-<!-- - `rgdal` released in 2003--import from more geographic data formats -->
-<!-- - `sp` released in 2005--creates spatial objects with classes and generic methods for points, lines, polygons, grids, and attribute data (but still lacked ability to do geometric operations) -->
-<!-- ## R packages linking to GIS software -->
-<!-- - `GRASS`, `spgrass6`, and `rgrass7` -->
-<!-- - `RSAGA`, `RPyGeo`, and `RQGIS` -->
-
-<!-- ## Visualization -->
-<!-- - `ggplot2` -->
-<!-- - `ggmap` -->
-<!-- - `rasterVis` -->
-<!-- - `tmap` -->
-<!-- - `leaflet` -->
-<!-- - `mapview` -->
-<!-- ####################################################### -->
-<!-- ##HP: Leave as is, but we should just say something like "there are many methods available in R for performing geospatial analysis, here  -->
-<!-- ## is a sample of some of the choices that you can also explore, but we limit ourseleves in scope to packages A,B,C,.... -->
-
-<!-- QUESTION FOR ALL### -->
-<!-- Which packages will we be exploring? Make sure my list is accurate.  -->
-<!-- 1. "sf" -->
-<!-- 2. "raster" -->
-<!-- 3. "naturalearth" -->
-<!-- 4. "ggmap" -->
-
-
-
 # Part 1: Plotting vector data
-
-<!-- ## Simple features -->
-<!-- * _feature_ "abstraction of real world phenomena" -->
-<!-- * _simple feature_ "feature with all geometric attributes described by piecewise straight lines or planar interpolation between sets of points" -->
-<!-- * Represents geometry using *points*, *lines*, *polygons*, or collections of those features -->
-<!-- * ISO standard supported by lots of software -->
 
 ## Working with `sf` objects
 * `sf` (simple feature) objects are extended `data.frame`s or `tibble`s
@@ -393,9 +317,6 @@ ggplot(zebra_sf) +
   geom_histogram(aes(small_road_dist, fill="small roads"), alpha=0.5) +
   scale_fill_manual(labels=c("large roads", "small roads"), values=c("blue", "orange"))
 ```
-
-
-
 
 
 # PART II: Plotting raster data and extracting information
