@@ -481,7 +481,7 @@ ggplot(data.frame(rasterToPoints(NDVI_mean)))
 ## Extracting raster data at locations
 
 ```{r cars, echo = TRUE}
-pop_sf <- read_csv("huc_whp_burnable_area_population.csv") %>% 
+pop_sf <- read_csv(here("data", "huc_whp_burnable_area_population.csv")) %>% 
   st_as_sf(., coords = 6:5, crs = "+init=epsg:4326") 
 pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
 ```
@@ -537,6 +537,7 @@ Using netCDF files (ncdf4 package in R) are my preferred approach.
 
 ## Adding basemaps!
 Focus on `ggmap`
+
 - As of mid-2018, requires registering with Google and obtaining an API key
 - Requires providing a valid credit card (yikes!), though charges are nonexistent or at least very minimal
 - See the `ggmap` [GitHub page](https://github.com/dkahle/ggmap) for more information about API keys
