@@ -318,7 +318,6 @@ ggplot(zebra_sf) +
 
 # PART II: Plotting raster data and extracting information
 
-# DATA: 1. *taxon* point locations, 2. relevant shapefile (Ecosystem type?, country?)
 ```{r setup_partII, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
