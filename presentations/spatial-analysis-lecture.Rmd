@@ -29,6 +29,7 @@ library("rnaturalearth")
 library("rnaturalearthdata")
 library("sp")
 library("knitr")
+library("cowplot")
 
 # scrape html data
 
@@ -481,7 +482,7 @@ ggplot(data.frame(rasterToPoints(NDVI_mean)))
 ## Extracting raster data at locations
 
 ```{r cars, echo = TRUE}
-pop_sf <- read_csv("huc_whp_burnable_area_population.csv") %>% 
+pop_sf <- read_csv(here("data", "huc_whp_burnable_area_population.csv")) %>% 
   st_as_sf(., coords = 6:5, crs = "+init=epsg:4326") 
 pop_sf$wspd <- raster::extract(wspd.raster, as(pop_sf, "Spatial"))
 ```
@@ -648,39 +649,44 @@ ggmap(my_basemap)
 ```
 
 
-# PART IV: Making it pretty for publication
+# PART IV: Making maps for publication
 
 ## Things to tweak
-- Fix the legend
+- Legends for spatial layers
 - Add a scale bar and north arrow
-- Annotations
 - Inset maps
 
-
 ## Original plot
-```{r}
+```{r echo = FALSE, include = TRUE}
 ggplot() + 
   geom_sf(data = large_roads, size = 1.5, color = "grey", inherit.aes = FALSE) + 
   geom_sf(data = small_roads, size = 0.6, color = "grey", inherit.aes = FALSE) + 
   geom_sf(data = zebra_sf, aes(color = ID))
 ```
 
-
 ## Fix overplotting and make legend keys points
-```{r new-colors}
-(q0 <- ggplot() +
+```{r echo = TRUE}
+q0 <- ggplot() +
   geom_sf(data = large_roads, size = 1.5, color = "grey", inherit.aes = FALSE) + 
   geom_sf(data = small_roads, size = 0.6, color = "grey", inherit.aes = FALSE) + 
   geom_sf(data = zebra_sf, aes(color = ID), inherit.aes = FALSE, 
           alpha = 0.1,               # fix over plotting
           show.legend = "point")     # make legend keys points instead of rects.
-)
+
+```
+
+## Fix overplotting and make legend keys points
+```{r echo = FALSE, include = TRUE}
+q0
 ```
 
 ## Refine plot
-```{r}
-(q1 <- q0 +
-  coord_sf(ylim = c(-20, -18.5), crs = st_crs(4326)) + # make space for legend
+```{r echo = TRUE}
+q1 <- q0 +
+  coord_sf(xlim = c(14, 17.5),   # make space for legend
+           ylim = c(-20.5, -18.25), 
+           expand = FALSE,
+           crs = st_crs(4326)) + 
   scale_color_manual(
     values = viridis::viridis(10), # pick new color scale
     name = "Zebra ID",             # change title of legend
@@ -693,99 +699,72 @@ ggplot() +
       override.aes = list(alpha = 1) # make the legend keys 100% opaque
     )) +
   theme_bw() +
-  theme(legend.position = c(0.78, 0.15),       # position legend in lower right corner
-        legend.key = element_rect(fill = NA),  # remove background of legend keys
-        panel.grid.major = element_line(color = "white")) + # remove graticules but leave coordinates
+  theme(legend.position = c(0.65, 0.2),        # position legend in lower R corner
+        legend.key = element_rect(fill = NA), # remove background of legend keys
+        panel.grid.major = element_line(color = "white")) + # remove graticules
   labs(x = "Longitude", y = "Lattitude")
-)
+```
+
+## Refine plot
+```{r echo = FALSE, include = TRUE}
+q1
 ```
 
 
 ## Add scale bar and north arrow
-```{r north-arrow}
-(q2 <- q1 +
-    annotation_scale(location = "bl", width_hint = 0.5) +
-    annotation_north_arrow(location = "bl", which_north = "true", 
-        pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
-        style = north_arrow_fancy_orienteering)
-)
+```{r echo = TRUE}
+q2 <- q1 +
+  annotation_scale(location = "bl") +  # from ggspatial package
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
+                         style = north_arrow_fancy_orienteering)
+```
+
+## Add scale bar and north arrow
+```{r echo = FALSE, include = TRUE}
+q2
 ```
 
 
-## Add inset map for context
-Natural earth package to access other data
-```{r}
+## Create a reference map
+```{r echo = TRUE, include = TRUE, warning = FALSE, message = FALSE}
 ne_namibia <- ne_countries(scale = "medium", country = "namibia", returnclass = "sf")
-ne_africa <- ne_countries(scale = "medium", continent = "africa", returnclass = "sf")
-ne_feature <- ne_download(scale = 10, category = "physical", type = "rivers_lake_centerlines", returnclass = "sf") 
-africa_rivers <- st_intersection(ne_feature, ne_africa)
-```
 
-## Natural earth package to access other data
-Create a base map with some information
-```{r}
-b0 <- ggplot(data = ne_africa) +  # need to put data in ggplot call for geom_rect to work
-  geom_sf(fill = "gray93", color = "gray93") + 
-  geom_sf(data = ne_namibia, fill = "gray78", color = "gray93") +
-  geom_sf(data = africa_rivers, color = "lightskyblue") +
+n1 <- ggplot(ne_namibia) + # need to put data in ggplot call for geom_rect
+  geom_sf() +
+  geom_sf(data = large_roads, inherit.aes = FALSE) +
+  geom_sf(data = small_roads, inherit.aes = FALSE) +
+  geom_rect(xmin = 14, xmax = 18, ymin = -20, ymax = -18, # extent indicator
+            fill = NA, colour = "black", size = 1.5) +
   theme_bw() +
-  coord_sf(xlim = c(-35, 51),       
-           ylim = c(-46.96, 37.34),  # make additional space for inset map
-           datum = NA)               # remove graticules and coords
-b0
+    coord_sf(xlim = c(11, 47),       
+           ylim = c(-34, -16.9), # make additional space for inset map
+           expand = FALSE,
+           datum = NA)           # remove graticules and coords
 ```
 
-## Add a reference box
-```{r}
-b1 <- b0 +
-  geom_rect(xmin = 14, xmax = 19, ymin = -21, ymax = -17, 
-            fill = NA, colour = "black", size = 1.5)
-b1
+## Create a reference map
+```{r echo = FALSE, include = TRUE}
+n1
 ```
 
+## Add a nested map
+```{r echo = TRUE, include = FALSE}
+# Calculate ratio of inset plot
+# use st_bbox(zebra_sf)
+inset_ratio <- (-18.5 - (-20.5))/(17.5 - 14)
 
-# Add a nested map
-```{r}
-b1 +
-  annotation_custom(
-    grob = ggplotGrob(q2),
-    xmin = -34,
-    xmax = 10,
-    ymin = -46,
-    ymax = -10
-  )
+cowplot::ggdraw(n1) +
+  cowplot::draw_plot(q2, width = 1.2, height = 1.2*inset_ratio,
+            x = 0.01, y = 0.1, hjust = 0, vjust = 0)
+
+ggsave(here("imgs", "namibia-zebra.png"), width = 10, height = 6)
 ```
 
-
-
-## Add annotation
-```{r annotations, eval = FALSE}
-world_points<- st_centroid(zebra_sf)
-world_points <- cbind(zebra_sf, st_coordinates(st_centroid(zebra_sf$geometry)))
-
-# zebra_point <- st_centroid(zebra_sf[1,])
-# zebra_point <- cbind(zebra_point, st_coordinates(st_centroid(zebra_point$geometry)))
-
-ggplot() + 
-  geom_sf(data = zebra_sf) +
-  geom_text(data = zebra_point, aes(x = X, y = Y, label = ID),
-            color = "yellow", fontface = "bold")
-
-# q2 <- q1 +
-#   geom_text(data = zebra_point, aes(x = X, y = Y, label = ID),
-#             color = "darkblue", fontface = "bold", check_overlap = FALSE)
-# q2
+## Add a nested map
+```{r echo = FALSE, fig.align = "center"}
+knitr::include_graphics(here("imgs", "namibia-zebra.png"))
 ```
-
-# Plot NVDI (vegetation)
-```{r}
-# ggplot(data.frame(rasterToPoints(NDVI_mean))) +
-#   geom_raster(aes(x=x, y=y,fill=ndvi_mean_utm)) +
-#   geom_sf(data=zebra_sf, size=0.7,col="black")
-```
-
-
-# Thank you!
 
 ## Additional Resources
 * [Simple Features package](https://r-spatial.github.io/sf/index.html)
@@ -797,4 +776,7 @@ ggplot() +
 * [Geocomputation with R](https://geocompr.robinlovelace.net/)
     - excellent in-depth treatment
     - includes theory, examples, and covers rasters
+
+# Thank you!
+
 
